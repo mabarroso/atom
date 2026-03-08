@@ -1,0 +1,25 @@
+/**
+ * Shared constants for server-side Atom game logic.
+ */
+const DEFAULT_BOARD_SIZE = 6
+const MIN_BOARD_SIZE = 4
+const MAX_BOARD_SIZE = 10
+const PLAYER_COLORS = {
+  1: '#007bff',
+  2: '#fd7e14'
+}
+const DEFAULT_ANIMATION_DELAY = 300
+const MAX_CASCADE_EXPLOSIONS = 100
+const GAME_IDLE_TIMEOUT_MS = 30 * 60 * 1000
+const FORFEIT_TIMEOUT_MS = Number(process.env.FORFEIT_TIMEOUT_MS) || (30 * 1000)
+
+module.exports = {
+  DEFAULT_BOARD_SIZE,
+  MIN_BOARD_SIZE,
+  MAX_BOARD_SIZE,
+  PLAYER_COLORS,
+  DEFAULT_ANIMATION_DELAY,
+  MAX_CASCADE_EXPLOSIONS,
+  GAME_IDLE_TIMEOUT_MS,
+  FORFEIT_TIMEOUT_MS
+}

@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node src/server/index.js",
     "dev": "nodemon src/server/index.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:e2e": "playwright test",
     "lint": "eslint src/ tests/"
   },

@@ -1,4 +1,5 @@
 import { createSocketClient } from './socket-client.js'
+import { initGameUI } from './game/game-ui.js'
 
 const connectionStatus = document.getElementById('connection-status')
 const statusButton = document.getElementById('btn-status')
@@ -26,6 +27,7 @@ function renderStatus (status) {
 
 const socket = createSocketClient()
 renderStatus('connecting')
+initGameUI(socket)
 
 socket.on('connect', () => {
   renderStatus('connected')
