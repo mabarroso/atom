@@ -3,6 +3,7 @@ const { test, expect } = require('@playwright/test')
 test('Game layout works on mobile tablet desktop', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 })
   await page.goto('/')
+  await expect(page.locator('#btn-new-game')).toBeVisible()
   await page.click('#btn-new-game')
   await expect(page.locator('#game-board')).toBeVisible()
 

@@ -59,11 +59,14 @@ Application available at `http://localhost:3000`.
 ## How to Play
 
 1. Open the app in two tabs or two browsers.
-2. Press `New Game` to create a session.
-3. The second player joins using the same session in the other tab.
-4. On your turn, select an empty cell or your own cell to add an atom.
-5. When a cell reaches its critical mass, it explodes and distributes atoms to adjacent cells.
-6. The last player to keep atoms on the board wins.
+2. Choose game mode:
+  - `Vs Jugador` for multiplayer
+  - `Vs Máquina` for single-player mode
+3. Press `New Game` to create a session.
+4. In `Vs Jugador`, the second player joins using the same session in the other tab.
+5. On your turn, select an empty cell or your own cell to add an atom.
+6. When a cell reaches its critical mass, it explodes and distributes atoms to adjacent cells.
+7. The last player to keep atoms on the board wins.
 
 ## Game Configuration
 
@@ -87,6 +90,7 @@ Application available at `http://localhost:3000`.
 
 - `server:statusUpdate`
 - `server:game:started`
+- `server:game:machineMove`
 - `server:game:stateUpdate`
 - `server:game:turnChanged`
 - `server:game:ended`

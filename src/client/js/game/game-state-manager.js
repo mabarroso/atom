@@ -15,6 +15,10 @@ export function createGameStateManager () {
     return state ? JSON.parse(JSON.stringify(state)) : null
   }
 
+  function getMachineMode () {
+    return Boolean(serverState?.machineMode)
+  }
+
   function updateFromServer (nextState) {
     serverState = cloneState(nextState)
     optimisticSnapshot = null
@@ -57,6 +61,7 @@ export function createGameStateManager () {
     applyOptimisticMove,
     revertOptimisticMove,
     subscribe,
-    getState
+    getState,
+    getMachineMode
   }
 }

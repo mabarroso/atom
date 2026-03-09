@@ -2,11 +2,14 @@ const {
   createGame,
   getGame,
   getGameState,
+  getMachinePlannedMove,
   processMove,
   recoverConnection,
   handleDisconnect,
   cleanupIdleGames
 } = require('./game/game-engine')
+
+const MACHINE_MOVE_DELAY_MS = 2000
 
 function safeHandler (socket, handler) {
   return (...args) => {
@@ -31,13 +34,25 @@ function registerSocketHandlers (io) {
     }))
 
     socket.on('client:statusRequest', safeHandler(socket, () => {
-      socket.emit('server:statusUpdate', { online: io.engine.clientsCount })
+      const assignment = socketToPlayer.get(socket.id)
+      if (!assignment) {
+        socket.emit('server:statusUpdate', { online: io.engine.clientsCount })
+        return
+      }
+
+      const state = getGameState(assignment.gameId)
+      socket.emit('server:statusUpdate', {
+        online: io.engine.clientsCount,
+        gameId: assignment.gameId,
+        machineMode: state?.machineMode ?? false
+      })
     }))
 
     socket.on('client:game:start', safeHandler(socket, (payload = {}) => {
       const boardSize = payload.boardSize
       const playerName = payload.playerName
       const requestedGameId = payload.gameId
+      const machineMode = payload.machineMode === true
 
       let game = null
       let playerNumber = 1
@@ -46,20 +61,29 @@ function registerSocketHandlers (io) {
         game = getGame(requestedGameId)
       }
 
+      if (game && game.machineMode) {
+        socket.emit('error:game:roomFull', { message: 'La partida contra máquina no admite segundo jugador' })
+        return
+      }
+
       if (game && game.players[2].socketId === null) {
         playerNumber = 2
       } else if (!game) {
         game = createGame(null, boardSize, {
           1: {
             name: playerName || 'Jugador 1',
+            isHuman: true,
             connected: true,
             socketId: socket.id
           },
           2: {
-            name: 'Jugador 2',
-            connected: false,
+            name: machineMode ? 'Machine' : 'Jugador 2',
+            isHuman: !machineMode,
+            connected: machineMode,
             socketId: null
           }
+        }, {
+          machineMode
         })
       } else {
         socket.emit('error:game:roomFull', { message: 'La partida ya tiene dos jugadores' })
@@ -79,6 +103,7 @@ function registerSocketHandlers (io) {
       io.to(game.roomId).emit('server:game:started', {
         gameId: game.gameId,
         roomId: game.roomId,
+        machineMode: game.machineMode,
         players: game.players,
         state: game.toJSON()
       })
@@ -94,6 +119,7 @@ function registerSocketHandlers (io) {
       if (state) {
         socket.emit('server:game:stateUpdate', {
           gameId: assignment.gameId,
+          machineMode: state.machineMode,
           state
         })
       }
@@ -114,6 +140,7 @@ function registerSocketHandlers (io) {
 
       io.to(result.state.roomId).emit('server:game:stateUpdate', {
         gameId: assignment.gameId,
+        machineMode: result.state.machineMode,
         state: result.state,
         animationSequence: result.animationSequence,
         truncated: result.truncated
@@ -131,6 +158,76 @@ function registerSocketHandlers (io) {
           reason: result.state.winReason,
           state: result.state
         })
+        return
+      }
+
+      if (result.state.machineMode === true && result.state.currentPlayer === 2) {
+        const plannedMove = getMachinePlannedMove(assignment.gameId)
+        if (!plannedMove) {
+          const game = getGame(assignment.gameId)
+          if (game && game.state === 'ACTIVE') {
+            const winner = game.checkWinner() || 1
+            game.end(winner, 'noMoves')
+            const endedState = game.toJSON()
+
+            io.to(endedState.roomId).emit('server:game:stateUpdate', {
+              gameId: assignment.gameId,
+              machineMode: endedState.machineMode,
+              state: endedState
+            })
+
+            io.to(endedState.roomId).emit('server:game:ended', {
+              gameId: assignment.gameId,
+              winner: endedState.winner,
+              reason: endedState.winReason,
+              state: endedState
+            })
+          }
+          return
+        }
+
+        setTimeout(() => {
+          const game = getGame(assignment.gameId)
+          if (!game || game.state !== 'ACTIVE' || game.currentPlayer !== 2) {
+            return
+          }
+
+          const previewAtoms = game.board.getAtomCount(plannedMove.row, plannedMove.col) + 1
+          io.to(game.roomId).emit('server:game:machineMove', {
+            gameId: assignment.gameId,
+            row: plannedMove.row,
+            col: plannedMove.col,
+            atoms: previewAtoms
+          })
+
+          const machineResult = processMove(assignment.gameId, 2, plannedMove.row, plannedMove.col)
+          if (!machineResult.ok) {
+            io.to(game.roomId).emit('error:internal', { message: 'Error interno del servidor' })
+            return
+          }
+
+          io.to(machineResult.state.roomId).emit('server:game:stateUpdate', {
+            gameId: assignment.gameId,
+            machineMode: machineResult.state.machineMode,
+            state: machineResult.state,
+            animationSequence: machineResult.animationSequence,
+            truncated: machineResult.truncated
+          })
+
+          io.to(machineResult.state.roomId).emit('server:game:turnChanged', {
+            gameId: assignment.gameId,
+            currentPlayer: machineResult.state.currentPlayer
+          })
+
+          if (machineResult.winner) {
+            io.to(machineResult.state.roomId).emit('server:game:ended', {
+              gameId: assignment.gameId,
+              winner: machineResult.state.winner,
+              reason: machineResult.state.winReason,
+              state: machineResult.state
+            })
+          }
+        }, MACHINE_MOVE_DELAY_MS)
       }
     }))
 

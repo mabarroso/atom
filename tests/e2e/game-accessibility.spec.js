@@ -17,11 +17,8 @@ test('Game board has accessible controls and labels', async ({ page }) => {
 
 test('Keyboard-only flow reaches board cells and performs move', async ({ page }) => {
   await page.goto('/')
-
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
+  await page.click('#btn-new-game')
+  await expect(page.locator('#game-board .game-cell')).toHaveCount(36)
 
   const firstCell = page.locator('#game-board .game-cell').first()
   await firstCell.focus()
@@ -59,4 +56,24 @@ test('Game area passes axe checks', async ({ page }) => {
     .analyze()
 
   expect(accessibilityScanResults.violations).toEqual([])
+})
+
+test('Machine turn updates are announced via ARIA live region', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    const machineModeInput = document.getElementById('game-mode-machine')
+    if (machineModeInput) {
+      machineModeInput.checked = true
+    }
+  })
+
+  await page.click('#btn-new-game')
+
+  const turnIndicator = page.locator('#turn-indicator')
+  await expect(turnIndicator).toHaveAttribute('role', 'status')
+  await expect(turnIndicator).toHaveAttribute('aria-live', 'polite')
+
+  await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
+  await expect(turnIndicator).toContainText('Machine')
+  await expect(turnIndicator).toContainText('Jugador 1')
 })

@@ -22,10 +22,11 @@ function createGameId () {
  * Aggregate game state container.
  */
 class GameState {
-  constructor ({ gameId, roomId, boardSize = DEFAULT_BOARD_SIZE, players = {} } = {}) {
+  constructor ({ gameId, roomId, boardSize = DEFAULT_BOARD_SIZE, players = {}, machineMode = false } = {}) {
     this.gameId = gameId || createGameId()
     this.roomId = roomId || this.gameId
     this.board = new Board(boardSize)
+    this.machineMode = machineMode
     this.state = GAME_STATES.SETUP
     this.currentPlayer = 1
     this.winner = null
@@ -38,14 +39,16 @@ class GameState {
         id: 1,
         name: players[1]?.name || 'Jugador 1',
         color: PLAYER_COLORS[1],
+        isHuman: players[1]?.isHuman ?? true,
         connected: players[1]?.connected ?? false,
         socketId: players[1]?.socketId || null
       },
       2: {
         id: 2,
-        name: players[2]?.name || 'Jugador 2',
+        name: players[2]?.name || (machineMode ? 'Machine' : 'Jugador 2'),
         color: PLAYER_COLORS[2],
-        connected: players[2]?.connected ?? false,
+        isHuman: players[2]?.isHuman ?? !machineMode,
+        connected: players[2]?.connected ?? machineMode,
         socketId: players[2]?.socketId || null
       }
     }
@@ -82,6 +85,13 @@ class GameState {
 
   setPlayerConnected (playerId, connected, socketId = null) {
     if (!this.players[playerId]) {
+      return
+    }
+
+    if (this.machineMode && playerId === 2 && this.players[2].isHuman === false) {
+      this.players[2].connected = true
+      this.players[2].socketId = null
+      this.lastActivityAt = Date.now()
       return
     }
 
@@ -146,6 +156,7 @@ class GameState {
     return {
       gameId: this.gameId,
       roomId: this.roomId,
+      machineMode: this.machineMode,
       state: this.state,
       currentPlayer: this.currentPlayer,
       winner: this.winner,

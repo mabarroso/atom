@@ -1,6 +1,7 @@
 const { GameState, GAME_STATES } = require('./game-state')
 const { applyMove } = require('./player-actions')
 const { resolveCascade } = require('./chain-reactions')
+const { selectMove } = require('./machine-player')
 const {
   DEFAULT_BOARD_SIZE,
   GAME_IDLE_TIMEOUT_MS,
@@ -17,8 +18,13 @@ const forfeitTimers = new Map()
  * @param {object} players
  * @returns {import('./game-state').GameState}
  */
-function createGame (roomId, boardSize = DEFAULT_BOARD_SIZE, players = {}) {
-  const gameState = new GameState({ roomId, boardSize, players })
+function createGame (roomId, boardSize = DEFAULT_BOARD_SIZE, players = {}, options = {}) {
+  const gameState = new GameState({
+    roomId,
+    boardSize,
+    players,
+    machineMode: options.machineMode === true
+  })
   gameState.start()
   games.set(gameState.gameId, gameState)
   return gameState
@@ -31,6 +37,19 @@ function getGame (gameId) {
 function getGameState (gameId) {
   const game = getGame(gameId)
   return game ? game.toJSON() : null
+}
+
+function getMachinePlannedMove (gameId, difficulty = 'Medium') {
+  const game = getGame(gameId)
+  if (!game) {
+    return null
+  }
+
+  if (!game.machineMode || game.state !== GAME_STATES.ACTIVE || game.currentPlayer !== 2) {
+    return null
+  }
+
+  return selectMove(game.board.cells, game.toJSON(), difficulty)
 }
 
 function removeGame (gameId) {
@@ -132,6 +151,10 @@ function handleDisconnect (gameId, player, onForfeit = null) {
     return null
   }
 
+  if (game.machineMode && player === 2 && game.players[2]?.isHuman === false) {
+    return game.toJSON()
+  }
+
   game.setPlayerConnected(player, false)
 
   const timer = setTimeout(() => {
@@ -155,6 +178,7 @@ module.exports = {
   createGame,
   getGame,
   getGameState,
+  getMachinePlannedMove,
   processMove,
   removeGame,
   cleanupIdleGames,

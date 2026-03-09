@@ -23,6 +23,8 @@ export function initGameUI (socket) {
   const joinGameButton = byId('btn-join-game')
   const joinGameInput = byId('join-game-id')
   const boardSizeSelect = byId('board-size')
+  const gameModeHuman = byId('game-mode-human')
+  const gameModeMachine = byId('game-mode-machine')
   const gameIdValue = byId('game-id-value')
 
   if (!gameContainer || !boardContainer) {
@@ -56,6 +58,14 @@ export function initGameUI (socket) {
     playerTwoIndicator.classList.toggle('is-current', currentPlayer === 2)
   }
 
+  function getSelectedGameMode () {
+    if (gameModeMachine?.checked) {
+      return 'machine'
+    }
+
+    return 'human'
+  }
+
   stateManager.subscribe((state) => {
     if (!state) {
       return
@@ -73,12 +83,18 @@ export function initGameUI (socket) {
     }
   })
 
-  socket.on('server:game:started', ({ gameId, state }) => {
+  socket.on('server:game:started', ({ gameId, machineMode, state }) => {
     joinedGameId = gameId
     gameIdValue.textContent = gameId
     joinGameInput.value = gameId
     gameContainer.classList.remove('d-none')
-    gameNotice.textContent = 'Partida iniciada'
+    if (machineMode === true || state?.machineMode === true) {
+      gameNotice.textContent = 'Partida iniciada contra Máquina'
+      if (gameModeMachine) gameModeMachine.checked = true
+    } else {
+      gameNotice.textContent = 'Partida iniciada'
+      if (gameModeHuman) gameModeHuman.checked = true
+    }
     stateManager.updateFromServer(state)
   })
 
@@ -99,6 +115,10 @@ export function initGameUI (socket) {
 
   socket.on('server:game:ended', ({ state }) => {
     stateManager.updateFromServer(state)
+  })
+
+  socket.on('server:game:machineMove', ({ row, col }) => {
+    gameBoard.flashTransfer(row, col)
   })
 
   socket.on('error:game:invalidMove', ({ message }) => {
@@ -130,7 +150,10 @@ export function initGameUI (socket) {
   }
 
   newGameButton.addEventListener('click', () => {
-    socket.emit('client:game:start', { boardSize: getSelectedBoardSize() })
+    socket.emit('client:game:start', {
+      boardSize: getSelectedBoardSize(),
+      machineMode: getSelectedGameMode() === 'machine'
+    })
   })
 
   restartButton.addEventListener('click', () => {
@@ -140,7 +163,8 @@ export function initGameUI (socket) {
 
     socket.emit('client:game:start', {
       boardSize: getSelectedBoardSize(),
-      gameId: joinedGameId
+      gameId: joinedGameId,
+      machineMode: getSelectedGameMode() === 'machine'
     })
   })
 

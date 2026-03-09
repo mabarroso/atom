@@ -3,7 +3,14 @@
  * Uses socket.io-client to create bot players without browser timing issues
  */
 
-const { io } = require('socket.io-client')
+let ioClient = null
+let socketIoClientAvailable = true
+
+try {
+  ioClient = require('socket.io-client').io
+} catch {
+  socketIoClientAvailable = false
+}
 
 class GameClient {
   constructor (serverUrl, playerId) {
@@ -18,8 +25,12 @@ class GameClient {
    * Connect to the server and wait for connection
    */
   async connect () {
+    if (!socketIoClientAvailable) {
+      throw new Error('socket.io-client is not installed')
+    }
+
     return new Promise((resolve, reject) => {
-      this.socket = io(this.serverUrl, {
+      this.socket = ioClient(this.serverUrl, {
         transports: ['websocket'],
         reconnection: false
       })
@@ -91,7 +102,7 @@ class GameClient {
    */
   async waitForEvent (eventType, timeout = 5000) {
     const startTime = Date.now()
-    
+
     while (Date.now() - startTime < timeout) {
       const event = this.events.find(e => e.type === eventType)
       if (event) {
@@ -101,7 +112,7 @@ class GameClient {
       }
       await this.sleep(50)
     }
-    
+
     throw new Error(`Timeout waiting for event: ${eventType}`)
   }
 
@@ -112,14 +123,14 @@ class GameClient {
    */
   async waitForState (condition, timeout = 5000) {
     const startTime = Date.now()
-    
+
     while (Date.now() - startTime < timeout) {
       if (this.gameState && condition(this.gameState)) {
         return this.gameState
       }
       await this.sleep(50)
     }
-    
+
     throw new Error('Timeout waiting for game state condition')
   }
 
@@ -144,14 +155,14 @@ class GameClient {
     if (!this.gameState || !this.gameState.players) {
       return null
     }
-    
+
     // players is an object with keys 1 and 2
     for (const playerId in this.gameState.players) {
       if (this.gameState.players[playerId].socketId === this.socket.id) {
         return Number(playerId)
       }
     }
-    
+
     return null
   }
 
@@ -162,10 +173,11 @@ class GameClient {
     if (!this.gameState || !this.gameState.board) {
       return null
     }
-    if (!this.gameState.board[row]) {
+    const boardCells = this.gameState.board.cells || this.gameState.board
+    if (!boardCells[row]) {
       return null
     }
-    return this.gameState.board[row][col]
+    return boardCells[row][col]
   }
 
   /**
@@ -204,6 +216,10 @@ class GameClient {
    */
   sleep (ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  static isAvailable () {
+    return socketIoClientAvailable
   }
 }
 

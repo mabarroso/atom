@@ -56,6 +56,12 @@
                 <option value="8">8x8</option>
                 <option value="10">10x10</option>
               </select>
+              <div class="btn-group" role="group" aria-label="Modo de juego">
+                <input type="radio" class="btn-check" name="game-mode" id="game-mode-human" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="game-mode-human">Vs Jugador</label>
+                <input type="radio" class="btn-check" name="game-mode" id="game-mode-machine" autocomplete="off">
+                <label class="btn btn-outline-primary" for="game-mode-machine">Vs Máquina</label>
+              </div>
               <button id="btn-new-game" type="button" class="btn btn-success" aria-label="Iniciar nueva partida">Nueva Partida</button>
               <button id="btn-restart-game" type="button" class="btn btn-outline-secondary" aria-label="Reiniciar partida">Reiniciar</button>
             </div>
