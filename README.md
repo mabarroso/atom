@@ -1,6 +1,6 @@
 # Atom
 
-Juego de mesa en línea ambientado en el mundo atómico. Para uno o dos jugadores.
+Online tabletop game set in the atomic world. For one or two players.
 
 ## Technologies Used
 
@@ -14,25 +14,25 @@ Juego de mesa en línea ambientado en el mundo atómico. Para uno o dos jugadore
 
 ## Requirements
 
-- Node.js 14 o superior
+- Node.js 14 or higher
 - npm
 
 ## Setup Instructions
 
-1. Clona el repositorio.
-2. Instala dependencias:
+1. Clone the repository.
+2. Install dependencies:
    - `npm install`
-3. Crea entorno local:
+3. Create local environment:
    - `cp .env.example .env`
 
 ## Running the Application
 
-- Desarrollo con recarga automática:
+- Development with automatic reload:
   - `npm run dev`
-- Ejecución estándar:
+- Standard execution:
   - `npm start`
 
-Aplicación disponible en `http://localhost:3000`.
+Application available at `http://localhost:3000`.
 
 ## Testing
 
@@ -45,34 +45,34 @@ Aplicación disponible en `http://localhost:3000`.
 
 ### Known E2E Limitations
 
-- Actualmente existen 2 escenarios marcados como `fixme` en `tests/e2e/game-flow.spec.js`:
+- Currently there are 2 scenarios marked as `fixme` in `tests/e2e/game-flow.spec.js`:
   - `Multi-step cascade explosions produce animation sequence`
   - `Win condition triggers when opponent has no atoms`
-- Motivo: sincronización multi-cliente inestable entre navegadores (timing/race conditions en Chromium/WebKit).
-- Estado actual del suite E2E: pasa correctamente con esos casos omitidos.
+- Reason: unstable multi-client synchronization between browsers (timing/race conditions in Chromium/WebKit).
+- Current E2E test suite status: passes correctly with those cases omitted.
 
 ### Pending Manual Validation
 
-- Animaciones de reacción en cadena (`18.6`): revisar visualmente que la secuencia sea clara y fluida en navegador real.
-- Lector de pantalla (`18.9`): validar anuncios ARIA con NVDA o VoiceOver durante turnos, errores y fin de partida.
+- Chain-reaction animations (`18.6`): visually verify that the sequence is clear and smooth in real browser.
+- Screen reader (`18.9`): validate ARIA announcements with NVDA or VoiceOver during turns, errors, and game end.
 
 ## How to Play
 
-1. Abre la app en dos pestañas o dos navegadores.
-2. Presiona `Nueva Partida` para crear una sesión.
-3. El segundo jugador se une usando la misma sesión en la otra pestaña.
-4. En tu turno, selecciona una celda vacía o una celda propia para añadir un átomo.
-5. Cuando una celda alcanza su masa crítica, explota y distribuye átomos a celdas adyacentes.
-6. Gana el último jugador que conserva átomos en el tablero.
+1. Open the app in two tabs or two browsers.
+2. Press `New Game` to create a session.
+3. The second player joins using the same session in the other tab.
+4. On your turn, select an empty cell or your own cell to add an atom.
+5. When a cell reaches its critical mass, it explodes and distributes atoms to adjacent cells.
+6. The last player to keep atoms on the board wins.
 
-## Configuración del Juego
+## Game Configuration
 
-- Tamaño de tablero por defecto: `6x6`.
-- Tamaño permitido: de `4x4` a `10x10`.
-- Colores de jugadores:
-  - Jugador 1: Azul `#007bff`
-  - Jugador 2: Naranja `#fd7e14`
-- Retardo base de animaciones: `300ms`.
+- Default board size: `6x6`.
+- Allowed size: from `4x4` to `10x10`.
+- Player colors:
+  - Player 1: Blue `#007bff`
+  - Player 2: Orange `#fd7e14`
+- Base animation delay: `300ms`.
 
 ## Socket Events
 
@@ -102,11 +102,11 @@ Aplicación disponible en `http://localhost:3000`.
 
 ## Project Structure
 
-- `src/server/`: servidor Express y Socket.io
-- `src/client/`: HTML, CSS y JavaScript del cliente
-- `tests/unit/`: pruebas unitarias
-- `tests/e2e/`: pruebas end-to-end
-- `openspec/`: artefactos de especificación
+- `src/server/`: Express and Socket.io server
+- `src/client/`: Client HTML, CSS and JavaScript
+- `tests/unit/`: Unit tests
+- `tests/e2e/`: End-to-end tests
+- `openspec/`: Specification artifacts
 
 ## Development
 
@@ -115,11 +115,11 @@ Aplicación disponible en `http://localhost:3000`.
 
 ## Troubleshooting
 
-- Si el servidor no inicia por puerto ocupado:
-  - revisa procesos en `3000` y libera el puerto
-- Si no aparecen celdas del tablero:
-  - verifica la conexión Socket.io y que `server:game:started` se esté emitiendo
-- Si Playwright falla por servidor no disponible:
-  - confirma que `http://127.0.0.1:3000/health` responde `{"status":"ok"}`
-- Si las pruebas de accesibilidad fallan:
-  - revisa atributos `aria-label`, `aria-live` y foco visible en celdas/botones
+- If the server fails to start due to port already in use:
+  - check processes on port `3000` and free the port
+- If board cells don't appear:
+  - verify Socket.io connection and that `server:game:started` is being emitted
+- If Playwright fails due to server unavailable:
+  - confirm that `http://127.0.0.1:3000/health` responds with `{"status":"ok"}`
+- If accessibility tests fail:
+  - check `aria-label`, `aria-live` attributes and visible focus on cells/buttons

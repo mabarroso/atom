@@ -1,16 +1,16 @@
 # Atom
-Un juego de mesa en línea ambientado en el mundo atómico. Para uno o dos jugadores.
+Online tabletop game set in the atomic world. For one or two players.
 
-## Tecnologías Utilizadas
-- **Servidor:** Node.js con Express.
-- **Comunicación en Tiempo Real:** Socket.io.
-- **Interfaz de Usuario:** HTML5, CSS3 (Moderno y Responsivo), Bootstrap y JavaScript (Vanilla).
+## Technologies Used
+- **Server:** Node.js with Express.
+- **Real-Time Communication:** Socket.io.
+- **User Interface:** HTML5, CSS3 (Modern and Responsive), Bootstrap and Vanilla JavaScript.
 
-## Requisitos
-- [Node.js](https://nodejs.org/) (v14 o superior)
-- npm (gestor de paquetes de Node)
+## Requirements
+- [Node.js](https://nodejs.org/) (v14 or higher)
+- npm (Node package manager)
 
-## Convenciones del proyecto
+## Project Conventions
 ### Language Standards
 - **Technical Artifacts (English)**: All internal artifacts must use English, including:
     - Code (variables, functions, classes, comments, logs)
@@ -62,138 +62,138 @@ Un juego de mesa en línea ambientado en el mundo atómico. Para uno o dos jugad
 - Commit conventions: Conventional Commits (feat:, fix:, test:, docs:).
 - Pull requests require code review and passing tests before merging.
 
-## Instalación y Configuración
-1.  **Clonar el proyecto:**
+## Installation and Configuration
+1.  **Clone the project:**
     ```bash
     git clone git@github.com:mabarroso/atom.git
     cd atom
     ```
-2.  **Instalar dependencias:**
+2.  **Install dependencies:**
     ```bash
     npm install
     ```
-3.  **Iniciar la aplicación:**
+3.  **Start the application:**
     ```bash
     npm start
-    # o directamente
+    # or directly
     node index.js
     ```
-4.  **Acceder:**
-    Abre tu navegador en `http://localhost:3000`.
+4.  **Access:**
+    Open your browser at `http://localhost:3000`.
 
 
-## Objetivo
-Aplicación web que permite a una o dos personas tener un juego de tablero por turnos. A las personas las llamaremos jugadores. Habrá Jugador 1 y Jugador 2.
+## Objective
+Web application that allows one or two people to have a turn-based board game. We will call them players. There will be Player 1 and Player 2.
 
-## Inicio del juego
-El primer jugador en entrar será Jugador 1. Creará el juego y elegirá el tamaño del tablero. El tablero será siempre N x N. Jugador 1 elegirá el valor de N entre 1 Y 10. Las columnas se nombraran con letras (A, B, C, D, E, F, G, H, I Y J) y las filas con números (1, 2, 3, 4, 5, 6, 7, 8, 9 Y 10). Cada casilla se nombrará por la letra de su columna y el número de su fila. Por ejemplo: A1 para la casilla de la primera fila y primera columna.
+## Game Start
+The first player to enter will be Player 1. They will create the game and choose the board size. The board is always N x N. Player 1 will choose the value of N between 1 and 10. Columns are named with letters (A, B, C, D, E, F, G, H, I and J) and rows with numbers (1, 2, 3, 4, 5, 6, 7, 8, 9 and 10). Each cell is named by its column letter and row number. For example: A1 for the cell of the first row and first column.
 
-Hay 3 tipos de casillas:
-- Esquinas: Tienen dos casillas adyacentes. Por ejemplo, en un tablero de 4x4, las casilla esquina son A1, D1, A4, D4.
-- Bordes: Tienen tres casillas adyacente. Por ejemplo, en un tablero de 4x4, las casillas borde son A2, A3, B1, B4, C1, C4, D2, D3.
-- Centros: Tienen cuatro casillas adyacentes. Por ejemplo, en un tablero de 4x4, las casillas centro son B2, B3, C2, C3.
+There are 3 types of cells:
+- Corners: Have two adjacent cells. For example, in a 4x4 board, the corner cells are A1, D1, A4, D4.
+- Edges: Have three adjacent cells. For example, in a 4x4 board, the edge cells are A2, A3, B1, B4, C1, C4, D2, D3.
+- Centers: Have four adjacent cells. For example, in a 4x4 board, the center cells are B2, B3, C2, C3.
 
-Una vez decidido el tamaño del tablero comenzará la primera partida. El contador de partidas será 1. Cada jugador tendrá como puntos 0. Se mostrará el contador de partidas y puntos de cada jugador junto al tablero dibujando todas las casillas. Las casillas serán de igual tamaño y deben poder contener 4 caracteres de forma 2x2. A los caracteres lo llamaremos átomos. Los átomos a usar serán "x" y "o".
+Once the board size is decided, the first game will begin. The game counter will be 1. Each player will have 0 points. The game counter and each player's points will be displayed next to the board by drawing all cells. The cells will be the same size and must be able to contain 4 characters in 2x2 format. We call characters "atoms". The atoms to use will be "x" and "o".
 
-El átomo o será del Jugador 1.
-El átomo x será del Jugador 2.
+The "o" atom belongs to Player 1.
+The "x" atom belongs to Player 2.
 
-Una casilla con átomos del Jugador 1 será una casilla ocupada por el Jugador 1.
-Una casilla con átomos del Jugador 2 será una casilla ocupada por el Jugador 2.
+A cell with atoms from Player 1 is a cell occupied by Player 1.
+A cell with atoms from Player 2 is a cell occupied by Player 2.
 
-Los átomos estarán dispuestos en cada casilla de la siguiente forma:
-- Casilla con 1 átomo del Jugador 1:<pre>o 
+Atoms are arranged in each cell as follows:
+- Cell with 1 atom from Player 1:<pre>o 
   </pre>
-- Casilla con 2 átomos del Jugador 1:<pre> o
+- Cell with 2 atoms from Player 1:<pre> o
 o </pre>
-- Casilla con 3 átomos del Jugador 1:<pre>oo
+- Cell with 3 atoms from Player 1:<pre>oo
 o </pre>
-- Casilla con 4 átomos del Jugador 1:<pre>oo
+- Cell with 4 atoms from Player 1:<pre>oo
 oo</pre>
-- Casilla con 5 átomos del Jugador 1:<pre>oo
+- Cell with 5 atoms from Player 1:<pre>oo
 o5</pre>
-- Casilla con 6 átomos del Jugador 1:<pre>oo
+- Cell with 6 atoms from Player 1:<pre>oo
 o6</pre>
-- Casilla con 1 átomo del Jugador 2:<pre>x 
+- Cell with 1 atom from Player 2:<pre>x 
   </pre>
-- Casilla con 2 átomos del Jugador 2:<pre> x
+- Cell with 2 atoms from Player 2:<pre> x
 x </pre>
-- Casilla con 3 átomos del Jugador 2:<pre>xx
+- Cell with 3 atoms from Player 2:<pre>xx
 x </pre>
-- Casilla con 4 átomos del Jugador 2:<pre>xx
+- Cell with 4 atoms from Player 2:<pre>xx
 xx</pre>
-- Casilla con 5 átomos del Jugador 2:<pre>xx
+- Cell with 5 atoms from Player 2:<pre>xx
 x5</pre>
-- Casilla con 6 átomos del Jugador 2:<pre>xx
+- Cell with 6 atoms from Player 2:<pre>xx
 x6</pre>
-- Casilla vacía:<pre>  
+- Empty cell:<pre>  
   </pre>
   
 
-## Jugador 2
-Al Jugador 1 se le dará una url única (no debe haberse dado antes ni volver a darse después) que usará Jugador 2 para unirse a la partida. Para cualquier jugador que no use una url de este tipo se le considerará Jugador 1 en una partida nueva.
+## Player 2
+Player 1 will be given a unique URL (must not have been given before and never given again) which Player 2 will use to join the game. For any player who does not use this type of URL, they will be considered Player 1 in a new game.
 
-Para cualquier jugador que al usar la url no haya un juego que corresponda, se le considerará Jugador 1 en una partida nueva pero la url única que se le dará será la misma que usó para entrar.
+For any player who uses the URL and there is no corresponding game, they will be considered Player 1 in a new game but the unique URL given to them will be the same as the one they used to enter.
 
-Si Jugador 1 elige no usar la url, el segundo jugador será Máquina. Máquina jugará según unas reglas que se definirán más adelante.
+If Player 1 chooses not to use the URL, the second player will be Machine. Machine will play according to rules that will be defined later.
 
-## Salida y vuelta de jugadores
-Si Jugador 2 pierde la conexión, puede volver a usar la url para regresar al juego y seguir siendo Jugador 2.
+## Player Disconnection and Return
+If Player 2 loses connection, they can use the URL again to return to the game and continue being Player 2.
 
-Si Jugador 1 pierde la conexión, puede volver a usar la url para regresar al juego y seguir siendo Jugador 1.
+If Player 1 loses connection, they can use the URL again to return to the game and continue being Player 1.
 
-Si los dos jugadores pierden la conexión, el juego termina.
+If both players lose connection, the game ends.
 
-## Partida
-Durante la partida los jugadores realizarán acciones por turnos. Llamaremos movimiento a la acción de cada jugador. La partida durará hasta que no sea posible realizar más movimientos.
+## Game
+During the game, players take actions by turns. We call a move the action of each player. The game will last until no more moves can be made.
 
-Un turno consiste en:
-1. Inicio de turno nuevo
-2. Jugador 1 realiza su movimiento.
-3. Jugador 2 realiza su movimiento.
-4. Fin del turno.
-5. Vuelta al punto 1.
+A turn consists of:
+1. New turn starts
+2. Player 1 makes their move.
+3. Player 2 makes their move.
+4. Turn ends.
+5. Go back to point 1.
 
-Un movimiento consiste en que el jugador añada un átomo a una casilla. Seleccionará la casilla indicando su identificación (columna y fila) o clicando sobre ella con el ratón. Sólo podrá añadir un átomo a una casilla vacía o a una casilla en la haya átomos suyos.
+A move consists of the player adding an atom to a cell. They will select the cell by indicating its identification (column and row) or by clicking on it with the mouse. They can only add an atom to an empty cell or to a cell with atoms of their own.
 
-Cada casilla admite un número máximo de átomos:
-- Esquina: 2 átomos.
-- Borde: 3 átomos.
-- Centro: 4 átomos.
+Each cell accepts a maximum number of atoms:
+- Corner: 2 atoms.
+- Edge: 3 atoms.
+- Center: 4 atoms.
 
-Cuando una casilla llega al número máximo de átomos que acepta se producirá una reacción. Una reacción se resuelve siguiendo los siguientes pasos:
-- Paso 1. Deja la casilla vacía.
-- Paso 2. Añade un átomo a cada casilla adyacente a ella. 
-- Paso 3. Si la casilla a la que añade el átomo tiene átomos de otro jugador, los convierte a átomos del jugador que hace el movimiento.
-- Paso 4. Si las casillas a la que ha añadido el átomo superan el número máximo de átomos que acepta, se aplica el paso 1 para cada una.
+When a cell reaches the maximum number of atoms it accepts, a reaction occurs. A reaction is resolved following these steps:
+- Step 1. Empty the cell.
+- Step 2. Add one atom to each adjacent cell.
+- Step 3. If the cell to which the atom is added has atoms from another player, convert them to atoms of the player making the move.
+- Step 4. If the cells to which the atom has been added exceed the maximum number of atoms they accept, apply step 1 to each of them.
 
-## Fin de la partida
-Los jugadores no podrán realizar más acciones cuando N-1 casillas tengan más átomos de los que admite o todas las casillas tengan átomos de un mismo jugador y no haya casillas vacías.
+## Game End
+Players can no longer make actions when N-1 cells have more atoms than they accept or all cells have atoms from the same player and there are no empty cells.
 
-Cuando los jugadores no pueden realizar más acciones la partida termina. Se suma un punto al jugador que haya hecho el último movimiento y se da la opción de comenzar una nueva partida mientras se continúan las reacciones que queden por resolver.
+When players can no longer make actions, the game ends. A point is added to the player who made the last move and the option is given to start a new game while continuing the reactions that remain to be resolved.
 
-## Reglas de Máquina
-- Con una probabilidad del 99%: Crea una reacción en una casilla esquina si tiene 1 casilla adyacente ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 99%: Crea una reacción en una casilla esquina si tiene 2 casillas adyacentes ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 90%: Crea una reacción en una casilla borde si tiene 1 casilla adyacente ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 95%: Crea una reacción en una casilla borde si tiene 2 casillas adyacentes ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 99%: Crea una reacción en una casilla borde si tiene 3 casillas adyacente ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 85%: Crea una reacción en una casilla centro si tiene 1 casilla adyacente ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 90%: Crea una reacción en una casilla centro si tiene 2 casillas adyacentes ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 95%: Crea una reacción en una casilla centro si tiene 3 casillas adyacentes ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 99%: Crea una reacción en una casilla centro si tiene 4 casilla adyacentes ocupada por Jugador 1 con el número máximo de átomos.
-- Con una probabilidad del 30%: Crea una reacción en una casilla centro si tiene 1 casilla adyacente ocupada por Jugador 1.
-- Con una probabilidad del 40%: Crea una reacción en una casilla centro si tiene 2 casillas adyacentes ocupada por Jugador 1.
-- Con una probabilidad del 50%: Crea una reacción en una casilla centro si tiene 3 casillas adyacentes ocupada por Jugador 1.
-- Con una probabilidad del 60%: Crea una reacción en una casilla centro si tiene 4 casilla adyacentes ocupada por Jugador 1.
-- Con una probabilidad del 40%: Crea una reacción en una casilla borde si tiene 1 casilla adyacente ocupada por Jugador 1.
-- Con una probabilidad del 50%: Crea una reacción en una casilla borde si tiene 2 casillas adyacentes ocupada por Jugador 1.
-- Con una probabilidad del 60%: Crea una reacción en una casilla borde si tiene 3 casillas adyacente ocupada por Jugador 1.
-- Con una probabilidad del 50%: Crea una reacción en una casilla esquina si tiene 1 casilla adyacente ocupada por Jugador 1.
-- Con una probabilidad del 60%: Crea una reacción en una casilla esquina si tiene 2 casillas adyacentes ocupada por Jugador 1.
-- Con una probabilidad del 50%: Ocupa una esquina libre.
-- Con una probabilidad del 50%: Ocupa un borde libre adyacente a una esquina ocupada por Jugador 2.
-- Con una probabilidad del 50%: Ocupa un centro libre adyacente a una casilla ocupada por Jugador 2.
-- Con una probabilidad del 50%: Añade a una casilla ocupada por Jugador 2 que no tenga el número máximo de átomos.
-- Con una probabilidad del 50%: Ocupa una casilla libre.
-- Si no se ha hecho nada de lo anterior, añade a una casilla ocupada por Jugador 2.
+## Machine Rules
+- With 99% probability: Creates a reaction in a corner cell if it has 1 adjacent cell occupied by Player 1 with the maximum number of atoms.
+- With 99% probability: Creates a reaction in a corner cell if it has 2 adjacent cells occupied by Player 1 with the maximum number of atoms.
+- With 90% probability: Creates a reaction in an edge cell if it has 1 adjacent cell occupied by Player 1 with the maximum number of atoms.
+- With 95% probability: Creates a reaction in an edge cell if it has 2 adjacent cells occupied by Player 1 with the maximum number of atoms.
+- With 99% probability: Creates a reaction in an edge cell if it has 3 adjacent cells occupied by Player 1 with the maximum number of atoms.
+- With 85% probability: Creates a reaction in a center cell if it has 1 adjacent cell occupied by Player 1 with the maximum number of atoms.
+- With 90% probability: Creates a reaction in a center cell if it has 2 adjacent cells occupied by Player 1 with the maximum number of atoms.
+- With 95% probability: Creates a reaction in a center cell if it has 3 adjacent cells occupied by Player 1 with the maximum number of atoms.
+- With 99% probability: Creates a reaction in a center cell if it has 4 adjacent cells occupied by Player 1 with the maximum number of atoms.
+- With 30% probability: Creates a reaction in a center cell if it has 1 adjacent cell occupied by Player 1.
+- With 40% probability: Creates a reaction in a center cell if it has 2 adjacent cells occupied by Player 1.
+- With 50% probability: Creates a reaction in a center cell if it has 3 adjacent cells occupied by Player 1.
+- With 60% probability: Creates a reaction in a center cell if it has 4 adjacent cells occupied by Player 1.
+- With 40% probability: Creates a reaction in an edge cell if it has 1 adjacent cell occupied by Player 1.
+- With 50% probability: Creates a reaction in an edge cell if it has 2 adjacent cells occupied by Player 1.
+- With 60% probability: Creates a reaction in an edge cell if it has 3 adjacent cells occupied by Player 1.
+- With 50% probability: Creates a reaction in a corner cell if it has 1 adjacent cell occupied by Player 1.
+- With 60% probability: Creates a reaction in a corner cell if it has 2 adjacent cells occupied by Player 1.
+- With 50% probability: Occupies a free corner.
+- With 50% probability: Occupies a free edge adjacent to a corner occupied by Player 2.
+- With 50% probability: Occupies a free center adjacent to a cell occupied by Player 2.
+- With 50% probability: Adds to a cell occupied by Player 2 that does not have the maximum number of atoms.
+- With 50% probability: Occupies a free cell.
+- If nothing from the above has been done, adds to a cell occupied by Player 2.
