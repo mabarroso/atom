@@ -101,6 +101,26 @@ test('Invalid move on opponent cell is rejected', async ({ browser }) => {
   await contextTwo.close()
 })
 
+test('Deterministic atom layout classes are applied for 1, 2 and 3 atoms', async ({ browser }) => {
+  const { contextOne, contextTwo, pageOne, pageTwo } = await setupTwoPlayers(browser)
+
+  const targetCell = pageOne.locator('#game-board .game-cell[data-row="2"][data-col="2"]')
+
+  await playSequencedMove(pageOne, pageTwo, { player: 1, row: 2, col: 2 })
+  await expect(targetCell.locator('.atoms-wrap')).toHaveClass(/atoms-layout-1/)
+
+  await playSequencedMove(pageOne, pageTwo, { player: 2, row: 0, col: 0 })
+  await playSequencedMove(pageOne, pageTwo, { player: 1, row: 2, col: 2 })
+  await expect(targetCell.locator('.atoms-wrap')).toHaveClass(/atoms-layout-2/)
+
+  await playSequencedMove(pageOne, pageTwo, { player: 2, row: 0, col: 1 })
+  await playSequencedMove(pageOne, pageTwo, { player: 1, row: 2, col: 2 })
+  await expect(targetCell.locator('.atoms-wrap')).toHaveClass(/atoms-layout-3/)
+
+  await contextOne.close()
+  await contextTwo.close()
+})
+
 test('Connection recovery works when second player reconnects', async ({ browser }) => {
   const { contextOne, contextTwo, pageOne } = await setupTwoPlayers(browser)
 

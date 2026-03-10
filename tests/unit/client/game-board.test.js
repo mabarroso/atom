@@ -121,13 +121,13 @@ describe('game-board', () => {
     delete global.document
   })
 
-  function buildState (lastMoveCellId) {
+  function buildState (lastMoveCellId, topLeftAtoms = 1) {
     return {
       board: {
         size: 2,
         cells: [
           [
-            { player: 1, atoms: 1 },
+            { player: topLeftAtoms > 0 ? 1 : null, atoms: topLeftAtoms },
             { player: null, atoms: 0 }
           ],
           [
@@ -142,6 +142,10 @@ describe('game-board', () => {
 
   function getHighlightedCells (container) {
     return container.children.filter((child) => child.classList.contains('is-last-move'))
+  }
+
+  function getCell (container, row, col) {
+    return container.querySelector(`.game-cell[data-row="${row}"][data-col="${col}"]`)
   }
 
   test('highlights only the current last-move cell', () => {
@@ -169,5 +173,41 @@ describe('game-board', () => {
     expect(previous.classList.contains('is-last-move')).toBe(false)
     expect(current.classList.contains('is-last-move')).toBe(true)
     expect(getHighlightedCells(container)).toHaveLength(1)
+  })
+
+  test('uses centered layout class for one atom', () => {
+    const container = new FakeElement('div')
+    const board = createGameBoard(container)
+
+    board.render(buildState(null, 1))
+
+    const cell = getCell(container, 0, 0)
+    const atomsWrap = cell.children[0]
+    expect(atomsWrap.classList.contains('atoms-layout-1')).toBe(true)
+    expect(atomsWrap.children).toHaveLength(1)
+  })
+
+  test('uses diagonal layout class for two atoms', () => {
+    const container = new FakeElement('div')
+    const board = createGameBoard(container)
+
+    board.render(buildState(null, 2))
+
+    const cell = getCell(container, 0, 0)
+    const atomsWrap = cell.children[0]
+    expect(atomsWrap.classList.contains('atoms-layout-2')).toBe(true)
+    expect(atomsWrap.children).toHaveLength(2)
+  })
+
+  test('uses upward-triangle layout class for three atoms', () => {
+    const container = new FakeElement('div')
+    const board = createGameBoard(container)
+
+    board.render(buildState(null, 3))
+
+    const cell = getCell(container, 0, 0)
+    const atomsWrap = cell.children[0]
+    expect(atomsWrap.classList.contains('atoms-layout-3')).toBe(true)
+    expect(atomsWrap.children).toHaveLength(3)
   })
 })

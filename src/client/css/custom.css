@@ -12,6 +12,7 @@
 
 .game-cell {
   min-height: 44px;
+  aspect-ratio: 1 / 1;
   border: 2px solid #d0d7de;
   border-radius: 0.5rem;
   background-color: #ffffff;
@@ -42,17 +43,68 @@
 }
 
 .atoms-wrap {
-  display: flex;
-  gap: 0.15rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  --atom-size: 22%;
+  --atom-layout-margin: 24%;
+  --atom-triangle-half-base: 30%;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .atom-dot {
-  width: 8px;
-  height: 8px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--atom-size);
+  height: var(--atom-size);
   border-radius: 50%;
   background-color: var(--cell-color, #6c757d);
+}
+
+.atoms-layout-2 .atom-dot:nth-child(1) {
+  top: var(--atom-layout-margin);
+  left: var(--atom-layout-margin);
+}
+
+.atoms-layout-2 .atom-dot:nth-child(2) {
+  top: calc(100% - var(--atom-layout-margin));
+  left: calc(100% - var(--atom-layout-margin));
+}
+
+.atoms-layout-3 .atom-dot:nth-child(1) {
+  top: var(--atom-layout-margin);
+  left: 50%;
+}
+
+.atoms-layout-3 .atom-dot:nth-child(2) {
+  top: calc(100% - var(--atom-layout-margin));
+  left: calc(50% - var(--atom-triangle-half-base));
+}
+
+.atoms-layout-3 .atom-dot:nth-child(3) {
+  top: calc(100% - var(--atom-layout-margin));
+  left: calc(50% + var(--atom-triangle-half-base));
+}
+
+.atoms-layout-4 .atom-dot:nth-child(1) {
+  top: var(--atom-layout-margin);
+  left: var(--atom-layout-margin);
+}
+
+.atoms-layout-4 .atom-dot:nth-child(2) {
+  top: var(--atom-layout-margin);
+  left: calc(100% - var(--atom-layout-margin));
+}
+
+.atoms-layout-4 .atom-dot:nth-child(3) {
+  top: calc(100% - var(--atom-layout-margin));
+  left: var(--atom-layout-margin);
+}
+
+.atoms-layout-4 .atom-dot:nth-child(4) {
+  top: calc(100% - var(--atom-layout-margin));
+  left: calc(100% - var(--atom-layout-margin));
 }
 
 .is-current {

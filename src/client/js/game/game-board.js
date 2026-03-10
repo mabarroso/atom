@@ -10,8 +10,7 @@ function describeCell (row, col, cell) {
 }
 
 function renderAtoms (atoms) {
-  const atomCount = Math.max(0, Math.min(4, atoms))
-  return Array.from({ length: atomCount }, () => '<span class="atom-dot"></span>').join('')
+  return Math.max(0, Math.min(4, atoms))
 }
 
 /**
@@ -49,9 +48,16 @@ export function createGameBoard (container, { onMove } = {}) {
         }
 
         if (cell.atoms > 0) {
+          const atomCount = renderAtoms(cell.atoms)
           const atomsWrap = document.createElement('span')
-          atomsWrap.className = 'atoms-wrap'
-          atomsWrap.innerHTML = renderAtoms(cell.atoms)
+          atomsWrap.className = `atoms-wrap atoms-layout-${atomCount}`
+
+          for (let index = 0; index < atomCount; index += 1) {
+            const atomDot = document.createElement('span')
+            atomDot.className = 'atom-dot'
+            atomsWrap.appendChild(atomDot)
+          }
+
           button.appendChild(atomsWrap)
         }
 

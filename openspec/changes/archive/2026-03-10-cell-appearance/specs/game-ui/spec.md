@@ -1,9 +1,7 @@
 # Game UI Specification
 
-## Purpose
-This capability covers the Atom gameplay interface: responsive board rendering, interactive and accessible cells, player/turn indicators, game controls and notifications, and visual animation behavior across device sizes.
+## MODIFIED Requirements
 
-## Requirements
 ### Requirement: Board grid rendering
 The system SHALL render the game board as a responsive grid with CSS Grid layout and square cells.
 
@@ -29,7 +27,7 @@ The system SHALL render the game board as a responsive grid with CSS Grid layout
 - **AND** center horizontally in the layout
 
 ### Requirement: Cell components with atom visualization
-The system SHALL render each cell with visual indicators for owner, atom count, interactive state, the most recent move origin, and deterministic atom-placement geometry.
+The system SHALL render each cell with visual indicators for owner, atom count, interactive state, and deterministic atom-placement geometry.
 
 #### Scenario: Empty cell is displayed
 - **WHEN** a cell has zero atoms
@@ -100,95 +98,3 @@ The system SHALL render each cell with visual indicators for owner, atom count, 
 #### Scenario: Machine move updates last-move highlight
 - **WHEN** machine mode is active and the machine performs a valid move
 - **THEN** the UI SHALL update the last-move highlight to the machine move-origin cell
-
-### Requirement: Player turn indicator
-The system SHALL display which player's turn it is with clear visual indication.
-
-#### Scenario: Current player is highlighted
-- **WHEN** it is a player's turn
-- **THEN** the UI SHALL highlight that player's indicator
-- **AND** use color, border, or icon to show active player
-
-#### Scenario: Turn indicator updates immediately
-- **WHEN** the turn changes
-- **THEN** the UI SHALL update the indicator within 100ms
-- **AND** use smooth transition or animation
-
-#### Scenario: Turn indicator is announced to screen readers
-- **WHEN** the turn changes
-- **THEN** an ARIA live region SHALL announce "Turno de Jugador N"
-- **AND** use `aria-live="polite"`
-
-### Requirement: Game controls
-The system SHALL provide controls for starting, restarting, and managing games.
-
-#### Scenario: New game button is available
-- **WHEN** in SETUP or ENDED state
-- **THEN** a "Nueva Partida" button SHALL be visible
-- **AND** clicking it SHALL start a new game
-
-#### Scenario: Restart button is available during game
-- **WHEN** in ACTIVE state
-- **THEN** a "Reiniciar" button SHALL be visible
-- **AND** clicking it SHALL prompt for confirmation
-- **AND** reset the game on confirmation
-
-#### Scenario: Controls are accessible
-- **WHEN** controls are rendered
-- **THEN** all buttons SHALL have descriptive `aria-label` attributes
-- **AND** be keyboard accessible
-- **AND** meet minimum 44x44px touch target size
-
-### Requirement: Win/lose notifications
-The system SHALL display clear notifications when a game ends.
-
-#### Scenario: Winner is announced
-- **WHEN** a player wins
-- **THEN** the UI SHALL display "¡Jugador N gana!" message
-- **AND** highlight the winning player with color/animation
-
-#### Scenario: Forfeit is announced
-- **WHEN** a player wins by forfeit
-- **THEN** the UI SHALL display "Jugador N gana por abandono"
-
-#### Scenario: Notification is accessible
-- **WHEN** game ends
-- **THEN** the notification SHALL be announced via ARIA live region
-- **AND** use `aria-live="assertive"` for immediate attention
-
-### Requirement: Responsive layout for mobile/desktop
-The system SHALL adapt the game UI layout for different screen sizes.
-
-#### Scenario: Mobile layout stacks vertically
-- **WHEN** viewport width is less than 768px
-- **THEN** the UI SHALL stack player indicators above/below the board
-- **AND** controls SHALL be full-width buttons
-
-#### Scenario: Desktop layout uses horizontal space
-- **WHEN** viewport width is 992px or greater
-- **THEN** the UI SHALL position player indicators beside the board
-- **AND** use optimal spacing for large screens
-
-### Requirement: Animation effects
-The system SHALL animate chain reactions with smooth visual effects.
-
-#### Scenario: Explosion animation is displayed
-- **WHEN** a cell explodes
-- **THEN** the cell SHALL show explosion animation (scale/fade effect)
-- **AND** duration SHALL be approximately 300ms
-
-#### Scenario: Atom distribution is animated
-- **WHEN** atoms move to adjacent cells
-- **THEN** atoms SHALL animate from source to destination
-- **AND** appear with smooth transition
-
-#### Scenario: Animations respect prefers-reduced-motion
-- **WHEN** user has `prefers-reduced-motion` enabled
-- **THEN** animations SHALL be simplified or skipped
-- **AND** state changes SHALL still be clearly visible
-
-#### Scenario: Animation queue processes in order
-- **WHEN** multiple explosions occur in sequence
-- **THEN** animations SHALL play one after another
-- **AND** maintain the cascade order from the server
-
