@@ -142,6 +142,7 @@ function registerSocketHandlers (io) {
         gameId: assignment.gameId,
         machineMode: result.state.machineMode,
         state: result.state,
+        moveOrigin: { row: Number(row), col: Number(col) },
         animationSequence: result.animationSequence,
         truncated: result.truncated
       })
@@ -210,6 +211,7 @@ function registerSocketHandlers (io) {
             gameId: assignment.gameId,
             machineMode: machineResult.state.machineMode,
             state: machineResult.state,
+            moveOrigin: { row: plannedMove.row, col: plannedMove.col },
             animationSequence: machineResult.animationSequence,
             truncated: machineResult.truncated
           })

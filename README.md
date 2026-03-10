@@ -42,6 +42,10 @@ Application available at `http://localhost:3000`.
   - `npm run test:watch`
 - E2E tests:
   - `npm run test:e2e`
+- E2E tests for CI (with 1 retry for flaky scenarios):
+  - `npm run test:e2e:ci`
+
+Playwright starts the web server automatically for E2E tests and reuses an existing server when one is already running on port 3000.
 
 ### Known E2E Limitations
 

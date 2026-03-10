@@ -61,4 +61,44 @@ describe('game-state-manager', () => {
     expect(manager.getState().board.cells[0][0].atoms).toBe(2)
     expect(listener).toHaveBeenCalled()
   })
+
+  test('updates lastMoveCellId from authoritative move origin', () => {
+    const manager = createGameStateManager()
+
+    manager.updateFromServer(buildState(0), { moveOrigin: { row: 1, col: 2 } })
+    expect(manager.getState().lastMoveCellId).toBe('1:2')
+
+    manager.updateFromServer(buildState(0), { moveOrigin: { row: 3, col: 1 } })
+    expect(manager.getState().lastMoveCellId).toBe('3:1')
+  })
+
+  test('keeps previous lastMoveCellId when move is rejected', () => {
+    const manager = createGameStateManager()
+
+    manager.updateFromServer(buildState(0), { moveOrigin: { row: 0, col: 0 } })
+    manager.applyOptimisticMove(0, 1, 1)
+    manager.revertOptimisticMove()
+
+    expect(manager.getState().lastMoveCellId).toBe('0:0')
+  })
+
+  test('resets lastMoveCellId when requested', () => {
+    const manager = createGameStateManager()
+
+    manager.updateFromServer(buildState(0), { moveOrigin: { row: 2, col: 2 } })
+    expect(manager.getState().lastMoveCellId).toBe('2:2')
+
+    manager.updateFromServer(buildState(0), { resetLastMove: true })
+    expect(manager.getState().lastMoveCellId).toBeNull()
+  })
+
+  test('keeps lastMoveCellId when server update has no move origin', () => {
+    const manager = createGameStateManager()
+
+    manager.updateFromServer(buildState(0), { moveOrigin: { row: 1, col: 1 } })
+    expect(manager.getState().lastMoveCellId).toBe('1:1')
+
+    manager.updateFromServer(buildState(2))
+    expect(manager.getState().lastMoveCellId).toBe('1:1')
+  })
 })

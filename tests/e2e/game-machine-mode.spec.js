@@ -29,12 +29,15 @@ test.describe('Machine mode browser flow', () => {
     await page.click('#btn-new-game')
 
     await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
+    await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).toHaveClass(/is-last-move/)
 
     await expect.poll(async () => {
       return page.locator('#game-board .game-cell[data-row="0"][data-col="0"] .atom-dot').count()
     }, { timeout: 7000 }).toBeGreaterThanOrEqual(1)
 
     await expect(page.locator('#turn-indicator')).toContainText('Jugador 1')
+    await expect(page.locator('#game-board .game-cell.is-last-move')).toHaveCount(1)
+    await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).not.toHaveClass(/is-last-move/)
   })
 
   test('Machine response includes approximately 2-second delay and no thinking message', async ({ page }) => {

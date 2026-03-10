@@ -24,6 +24,7 @@ export function createGameBoard (container, { onMove } = {}) {
   function render (state) {
     const size = state.board.size
     const boardCells = state.board.cells
+    const lastMoveCellId = state.lastMoveCellId || null
 
     container.style.setProperty('--board-size', size)
     container.innerHTML = ''
@@ -37,6 +38,10 @@ export function createGameBoard (container, { onMove } = {}) {
         button.dataset.row = String(row)
         button.dataset.col = String(col)
         button.setAttribute('aria-label', describeCell(row, col, cell))
+
+        if (lastMoveCellId === `${row}:${col}`) {
+          button.classList.add('is-last-move')
+        }
 
         if (cell.player) {
           button.style.setProperty('--cell-color', PLAYER_COLORS[cell.player])

@@ -95,11 +95,11 @@ export function initGameUI (socket) {
       gameNotice.textContent = 'Partida iniciada'
       if (gameModeHuman) gameModeHuman.checked = true
     }
-    stateManager.updateFromServer(state)
+    stateManager.updateFromServer(state, { resetLastMove: true })
   })
 
-  socket.on('server:game:stateUpdate', ({ state, animationSequence = [] }) => {
-    stateManager.updateFromServer(state)
+  socket.on('server:game:stateUpdate', ({ state, moveOrigin, animationSequence = [] }) => {
+    stateManager.updateFromServer(state, { moveOrigin })
     animationQueue.playExplosionSequence(animationSequence, (step) => {
       gameBoard.flashExplosion(step.row, step.col)
       gameBoard.flashTransfer(step.row, step.col)

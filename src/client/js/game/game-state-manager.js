@@ -5,6 +5,7 @@
 export function createGameStateManager () {
   let serverState = null
   let optimisticSnapshot = null
+  let lastMoveCellId = null
   const listeners = new Set()
 
   function notify () {
@@ -19,8 +20,30 @@ export function createGameStateManager () {
     return Boolean(serverState?.machineMode)
   }
 
-  function updateFromServer (nextState) {
+  function toCellId (moveOrigin) {
+    if (!moveOrigin || !Number.isInteger(moveOrigin.row) || !Number.isInteger(moveOrigin.col)) {
+      return null
+    }
+
+    return `${moveOrigin.row}:${moveOrigin.col}`
+  }
+
+  function updateFromServer (nextState, options = {}) {
+    if (options.resetLastMove === true) {
+      lastMoveCellId = null
+    }
+
+    if (options.moveOrigin) {
+      const nextLastMoveCellId = toCellId(options.moveOrigin)
+      if (nextLastMoveCellId) {
+        lastMoveCellId = nextLastMoveCellId
+      }
+    }
+
     serverState = cloneState(nextState)
+    if (serverState) {
+      serverState.lastMoveCellId = lastMoveCellId
+    }
     optimisticSnapshot = null
     notify()
   }

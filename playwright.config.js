@@ -8,7 +8,7 @@ module.exports = defineConfig({
   webServer: {
     command: 'FORFEIT_TIMEOUT_MS=1200 npm run start',
     url: 'http://127.0.0.1:3000/health',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 120000
   },
   projects: [

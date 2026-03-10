@@ -55,6 +55,8 @@ test('Game initialization and first move flow', async ({ page }) => {
 
   await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
   await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"] .atom-dot')).toHaveCount(1)
+  await expect(page.locator('#game-board .game-cell.is-last-move')).toHaveCount(1)
+  await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).toHaveClass(/is-last-move/)
 })
 
 test('Game controls are available and localized', async ({ page }) => {
