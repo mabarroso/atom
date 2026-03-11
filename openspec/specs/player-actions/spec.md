@@ -2,10 +2,9 @@
 
 ## Purpose
 This capability covers player interaction rules in Atom: move validation, atom placement behavior, integration with chain reactions, game-state updates after valid moves, and client optimistic-update reconciliation.
-
 ## Requirements
 ### Requirement: Move validation
-The system SHALL validate all player moves before applying them to game state.
+The system SHALL validate all player actions before applying them to game state, including permission-gated non-move actions.
 
 #### Scenario: Valid move on empty cell
 - **WHEN** a player clicks an empty cell (atoms=0) on their turn
@@ -38,6 +37,23 @@ The system SHALL validate all player moves before applying them to game state.
 - **WHEN** a player attempts a move with invalid row/column coordinates
 - **THEN** the system SHALL reject the move
 - **AND** emit error event "error:game:invalidCell"
+
+#### Scenario: Player 1 can reveal atom counters
+- **WHEN** Player 1 triggers the reveal atom counters action in ACTIVE state
+- **THEN** the system SHALL accept the action
+- **AND** set `atomCountersVisible` to true
+- **AND** broadcast updated authoritative state to all players
+
+#### Scenario: Player 2 cannot reveal atom counters
+- **WHEN** Player 2 triggers the reveal atom counters action
+- **THEN** the system SHALL reject the action
+- **AND** keep `atomCountersVisible` unchanged
+- **AND** emit a permission-related error event
+
+#### Scenario: Reveal action is idempotent
+- **WHEN** Player 1 triggers reveal action while `atomCountersVisible` is already true
+- **THEN** the system SHALL keep `atomCountersVisible` as true
+- **AND** SHALL NOT alter gameplay state beyond synchronized visibility confirmation
 
 ### Requirement: Atom placement logic
 The system SHALL apply valid moves by updating cell state and triggering chain reactions if necessary.

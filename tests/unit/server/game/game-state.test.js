@@ -51,6 +51,30 @@ describe('GameState', () => {
     expect(serialized.turn).toBe(3)
   })
 
+  test('keeps atom counters hidden by default and reveals when requested', () => {
+    const game = new GameState()
+    game.start()
+
+    expect(game.toJSON().atomCountersVisible).toBe(false)
+
+    game.revealAtomCounters()
+    expect(game.toJSON().atomCountersVisible).toBe(true)
+  })
+
+  test('serializes authoritative atom counter values from board state', () => {
+    const game = new GameState()
+    game.start()
+
+    game.board.placeAtom(1, 0, 0)
+    game.board.placeAtom(1, 0, 1)
+    game.board.placeAtom(2, 1, 0)
+
+    const serialized = game.toJSON()
+    expect(serialized.atomCounters.player1).toBe(2)
+    expect(serialized.atomCounters.player2).toBe(1)
+    expect(serialized.atomCounters.total).toBe(3)
+  })
+
   test('detects winner after minimum moves', () => {
     const game = new GameState()
     game.start()

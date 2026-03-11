@@ -103,7 +103,7 @@ The system SHALL detect when a player has won the game: last player with atoms o
 - **AND** end the game with reason "forfeit"
 
 ### Requirement: Game state synchronization
-The system SHALL provide complete game state for client synchronization, including authoritative turn-number progression.
+The system SHALL provide complete game state for client synchronization, including authoritative turn-number progression and atom-counter visibility state.
 
 #### Scenario: Full state includes all game data
 - **WHEN** a client requests game state
@@ -124,6 +124,21 @@ The system SHALL provide complete game state for client synchronization, includi
 - **WHEN** a client reconnects and receives state resynchronization
 - **THEN** the synchronized state SHALL include the latest `turnNumber`
 - **AND** SHALL match the server's current turn progression
+
+#### Scenario: Synchronized state includes atom counter visibility flag
+- **WHEN** the server emits a game state snapshot
+- **THEN** the payload SHALL include `atomCountersVisible`
+- **AND** the value SHALL represent the authoritative reveal state shared by all players
+
+#### Scenario: Synchronized state includes authoritative atom counter values
+- **WHEN** the server emits a game state snapshot
+- **THEN** the payload SHALL include Player 1 atom count, Player 2 atom count, and total atom count
+- **AND** values SHALL be derived from the authoritative board state after all resolved reactions
+
+#### Scenario: New game resets atom counter visibility
+- **WHEN** a new game starts or current game is restarted
+- **THEN** `atomCountersVisible` SHALL reset to false
+- **AND** clients SHALL receive hidden counter state in synchronized updates
 
 ### Requirement: Game mode tracking
 The system SHALL track whether the game is Human vs Human or Human vs Machine mode.

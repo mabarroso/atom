@@ -233,6 +233,39 @@ function registerSocketHandlers (io) {
       }
     }))
 
+    socket.on('client:game:revealAtomCounters', safeHandler(socket, () => {
+      const assignment = socketToPlayer.get(socket.id)
+      if (!assignment) {
+        socket.emit('error:game:notFound', { message: 'Partida no encontrada' })
+        return
+      }
+
+      const game = getGame(assignment.gameId)
+      if (!game) {
+        socket.emit('error:game:notFound', { message: 'Partida no encontrada' })
+        return
+      }
+
+      if (game.state !== 'ACTIVE') {
+        socket.emit('error:game:notActive', { message: 'La partida no está activa' })
+        return
+      }
+
+      if (assignment.player !== 1) {
+        socket.emit('error:game:notAllowed', { message: 'Solo Jugador 1 puede revelar contadores' })
+        return
+      }
+
+      game.revealAtomCounters()
+      const state = game.toJSON()
+
+      io.to(state.roomId).emit('server:game:stateUpdate', {
+        gameId: assignment.gameId,
+        machineMode: state.machineMode,
+        state
+      })
+    }))
+
     socket.on('disconnect', (reason) => {
       console.log(`Client disconnected: ${socket.id} (${reason})`)
       io.emit('server:statusUpdate', { online: io.engine.clientsCount })

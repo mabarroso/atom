@@ -21,12 +21,17 @@ export function initGameUI (socket) {
   const playerTwoIndicator = byId('player-2-indicator')
   const newGameButton = byId('btn-new-game')
   const restartButton = byId('btn-restart-game')
+  const revealCountersButton = byId('btn-reveal-counters')
   const joinGameButton = byId('btn-join-game')
   const joinGameInput = byId('join-game-id')
   const boardSizeSelect = byId('board-size')
   const gameModeHuman = byId('game-mode-human')
   const gameModeMachine = byId('game-mode-machine')
   const gameIdValue = byId('game-id-value')
+  const atomCountersPanel = byId('atom-counters-panel')
+  const atomCounterPlayerOne = byId('atom-counter-player-1')
+  const atomCounterPlayerTwo = byId('atom-counter-player-2')
+  const atomCounterTotal = byId('atom-counter-total')
 
   if (!gameContainer || !boardContainer) {
     return
@@ -47,6 +52,43 @@ export function initGameUI (socket) {
   })
 
   let joinedGameId = null
+
+  function getLocalPlayerId (state) {
+    if (!state || !socket.id) {
+      return null
+    }
+
+    if (state.players[1]?.socketId === socket.id) {
+      return 1
+    }
+
+    if (state.players[2]?.socketId === socket.id) {
+      return 2
+    }
+
+    return null
+  }
+
+  function updateAtomCounters (state) {
+    const localPlayerId = getLocalPlayerId(state)
+    const canRevealCounters = localPlayerId === 1 && state.state === 'ACTIVE' && state.atomCountersVisible !== true
+
+    if (revealCountersButton) {
+      revealCountersButton.classList.toggle('d-none', !canRevealCounters)
+      revealCountersButton.disabled = !canRevealCounters
+    }
+
+    if (!atomCountersPanel || !atomCounterPlayerOne || !atomCounterPlayerTwo || !atomCounterTotal) {
+      return
+    }
+
+    const counters = state.atomCounters || { player1: 0, player2: 0, total: 0 }
+    atomCounterPlayerOne.textContent = String(counters.player1 ?? 0)
+    atomCounterPlayerTwo.textContent = String(counters.player2 ?? 0)
+    atomCounterTotal.textContent = String(counters.total ?? 0)
+
+    atomCountersPanel.classList.toggle('d-none', state.atomCountersVisible !== true)
+  }
 
   function updatePlayerIndicators (players, currentPlayer) {
     const playerOne = players[1]
@@ -83,6 +125,7 @@ export function initGameUI (socket) {
     }
     turnIndicator.textContent = `Turno de ${currentPlayerName}`
     updatePlayerIndicators(state.players, state.currentPlayer)
+    updateAtomCounters(state)
 
     if (state.state === 'ENDED') {
       const reason = state.winReason === 'forfeit' ? ' por abandono' : ''
@@ -151,6 +194,10 @@ export function initGameUI (socket) {
     gameNotice.textContent = message || 'Partida no encontrada'
   })
 
+  socket.on('error:game:notAllowed', ({ message }) => {
+    gameNotice.textContent = message || 'Acción no permitida'
+  })
+
   function getSelectedBoardSize () {
     const parsed = Number(boardSizeSelect.value)
     return Number.isInteger(parsed) ? parsed : DEFAULT_BOARD_SIZE
@@ -173,6 +220,10 @@ export function initGameUI (socket) {
       gameId: joinedGameId,
       machineMode: getSelectedGameMode() === 'machine'
     })
+  })
+
+  revealCountersButton?.addEventListener('click', () => {
+    socket.emit('client:game:revealAtomCounters')
   })
 
   joinGameButton.addEventListener('click', () => {

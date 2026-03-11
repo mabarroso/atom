@@ -145,6 +145,53 @@ test('Connection recovery works when second player reconnects', async ({ browser
   await contextOne.close()
 })
 
+test('Atom counters are hidden by default and Player 1 reveal makes them visible to all players', async ({ browser }) => {
+  const { contextOne, contextTwo, pageOne, pageTwo } = await setupTwoPlayers(browser)
+
+  await expect(pageOne.locator('#atom-counters-panel')).toHaveClass(/d-none/)
+  await expect(pageTwo.locator('#atom-counters-panel')).toHaveClass(/d-none/)
+
+  await expect(pageOne.locator('#btn-reveal-counters')).toBeVisible()
+  await expect(pageTwo.locator('#btn-reveal-counters')).toBeHidden()
+
+  await pageOne.click('#btn-reveal-counters')
+
+  await expect(pageOne.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
+  await expect(pageTwo.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
+  await expect(pageOne.locator('#atom-counter-total')).toHaveText('0')
+  await expect(pageTwo.locator('#atom-counter-total')).toHaveText('0')
+
+  await pageOne.click('#game-board .game-cell[data-row="0"][data-col="0"]')
+  await expect(pageOne.locator('#atom-counter-player-1')).toHaveText('1')
+  await expect(pageTwo.locator('#atom-counter-player-1')).toHaveText('1')
+  await expect(pageOne.locator('#atom-counter-total')).toHaveText('1')
+
+  await contextOne.close()
+  await contextTwo.close()
+})
+
+test('Atom counter visibility is preserved after reconnect', async ({ browser }) => {
+  const { contextOne, contextTwo, pageOne } = await setupTwoPlayers(browser)
+
+  await pageOne.click('#btn-reveal-counters')
+  await expect(pageOne.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
+
+  const gameId = (await pageOne.locator('#game-id-value').textContent()).trim()
+  await contextTwo.close()
+
+  const reconnectContext = await browser.newContext()
+  const reconnectPage = await reconnectContext.newPage()
+  await reconnectPage.goto('/')
+  await reconnectPage.fill('#join-game-id', gameId)
+  await reconnectPage.click('#btn-join-game')
+
+  await expect(reconnectPage.locator('#game-id-value')).toContainText(gameId)
+  await expect(reconnectPage.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
+
+  await reconnectContext.close()
+  await contextOne.close()
+})
+
 test('Multi-step cascade explosions produce animation sequence', async ({ browser }) => {
   test.fixme(true, 'Flaky multi-client sync across browsers without deterministic test harness')
   const { contextOne, contextTwo, pageOne, pageTwo } = await setupTwoPlayers(browser, 4)

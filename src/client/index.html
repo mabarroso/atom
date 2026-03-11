@@ -67,6 +67,13 @@
               </div>
               <button id="btn-new-game" type="button" class="btn btn-success" aria-label="Iniciar nueva partida">Nueva Partida</button>
               <button id="btn-restart-game" type="button" class="btn btn-outline-secondary" aria-label="Reiniciar partida">Reiniciar</button>
+              <button id="btn-reveal-counters" type="button" class="btn btn-outline-info d-none" aria-label="Revelar contadores de átomos">Revelar Contadores</button>
+            </div>
+
+            <div id="atom-counters-panel" class="d-none border rounded p-2 mb-3" role="status" aria-live="polite" aria-label="Contadores de átomos">
+              <small class="text-muted">Jugador 1: <span id="atom-counter-player-1">0</span></small>
+              <small class="text-muted ms-3">Jugador 2: <span id="atom-counter-player-2">0</span></small>
+              <small class="text-muted ms-3">Total: <span id="atom-counter-total">0</span></small>
             </div>
 
             <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 mb-3">

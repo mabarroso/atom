@@ -33,6 +33,7 @@ class GameState {
     this.winReason = null
     this.roundNumber = 1
     this.turn = 1
+    this.atomCountersVisible = false
     this.moveHistory = []
     this.lastActivityAt = Date.now()
     this.players = {
@@ -63,6 +64,7 @@ class GameState {
     this.currentPlayer = 1
     this.roundNumber = 1
     this.turn = 1
+    this.atomCountersVisible = false
     this.lastActivityAt = Date.now()
   }
 
@@ -117,6 +119,34 @@ class GameState {
     this.lastActivityAt = Date.now()
   }
 
+  getAtomCounters () {
+    let playerOneAtoms = 0
+    let playerTwoAtoms = 0
+
+    for (const row of this.board.cells) {
+      for (const cell of row) {
+        if (cell.player === 1) {
+          playerOneAtoms += cell.atoms
+        }
+
+        if (cell.player === 2) {
+          playerTwoAtoms += cell.atoms
+        }
+      }
+    }
+
+    return {
+      player1: playerOneAtoms,
+      player2: playerTwoAtoms,
+      total: playerOneAtoms + playerTwoAtoms
+    }
+  }
+
+  revealAtomCounters () {
+    this.atomCountersVisible = true
+    this.lastActivityAt = Date.now()
+  }
+
   getHistory () {
     return [...this.moveHistory]
   }
@@ -168,6 +198,8 @@ class GameState {
       winReason: this.winReason,
       turn: this.turn,
       roundNumber: this.roundNumber,
+      atomCountersVisible: this.atomCountersVisible,
+      atomCounters: this.getAtomCounters(),
       players: this.players,
       board: this.board.toJSON(),
       moveHistory: this.getHistory(),
