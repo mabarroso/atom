@@ -31,6 +31,7 @@ class GameState {
     this.currentPlayer = 1
     this.winner = null
     this.winReason = null
+    this.turnNumber = 1
     this.turn = 1
     this.moveHistory = []
     this.lastActivityAt = Date.now()
@@ -60,6 +61,7 @@ class GameState {
   start () {
     this.state = GAME_STATES.ACTIVE
     this.currentPlayer = 1
+    this.turnNumber = 1
     this.turn = 1
     this.lastActivityAt = Date.now()
   }
@@ -78,7 +80,8 @@ class GameState {
 
   switchTurn () {
     this.currentPlayer = this.currentPlayer === 1 ? 2 : 1
-    this.turn += 1
+    this.turnNumber += 1
+    this.turn = this.turnNumber
     this.lastActivityAt = Date.now()
     return this.currentPlayer
   }
@@ -105,7 +108,7 @@ class GameState {
       player,
       row,
       col,
-      turn: this.turn,
+      turn: this.turnNumber,
       animationSequence,
       timestamp: Date.now()
     })
@@ -161,7 +164,8 @@ class GameState {
       currentPlayer: this.currentPlayer,
       winner: this.winner,
       winReason: this.winReason,
-      turn: this.turn,
+      turn: this.turnNumber,
+      turnNumber: this.turnNumber,
       players: this.players,
       board: this.board.toJSON(),
       moveHistory: this.getHistory(),

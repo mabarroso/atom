@@ -27,15 +27,18 @@ test.describe('Machine mode browser flow', () => {
     })
     await expect(page.locator('#game-mode-machine')).toBeChecked()
     await page.click('#btn-new-game')
+    await expect(page.locator('#turn-number-indicator')).toContainText('Turno #1')
 
     await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
     await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).toHaveClass(/is-last-move/)
+    await expect(page.locator('#turn-number-indicator')).toContainText('Turno #2')
 
     await expect.poll(async () => {
       return page.locator('#game-board .game-cell[data-row="0"][data-col="0"] .atom-dot').count()
     }, { timeout: 7000 }).toBeGreaterThanOrEqual(1)
 
     await expect(page.locator('#turn-indicator')).toContainText('Jugador 1')
+    await expect(page.locator('#turn-number-indicator')).toContainText('Turno #3')
     await expect(page.locator('#game-board .game-cell.is-last-move')).toHaveCount(1)
     await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).not.toHaveClass(/is-last-move/)
   })

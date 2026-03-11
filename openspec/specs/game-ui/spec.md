@@ -2,7 +2,6 @@
 
 ## Purpose
 This capability covers the Atom gameplay interface: responsive board rendering, interactive and accessible cells, player/turn indicators, game controls and notifications, and visual animation behavior across device sizes.
-
 ## Requirements
 ### Requirement: Board grid rendering
 The system SHALL render the game board as a responsive grid with CSS Grid layout and square cells.
@@ -102,7 +101,7 @@ The system SHALL render each cell with visual indicators for owner, atom count, 
 - **THEN** the UI SHALL update the last-move highlight to the machine move-origin cell
 
 ### Requirement: Player turn indicator
-The system SHALL display which player's turn it is with clear visual indication.
+The system SHALL display which player's turn it is with clear visual indication and include the current turn number.
 
 #### Scenario: Current player is highlighted
 - **WHEN** it is a player's turn
@@ -118,6 +117,21 @@ The system SHALL display which player's turn it is with clear visual indication.
 - **WHEN** the turn changes
 - **THEN** an ARIA live region SHALL announce "Turno de Jugador N"
 - **AND** use `aria-live="polite"`
+
+#### Scenario: Turn number is visible during active gameplay
+- **WHEN** the game is in ACTIVE state
+- **THEN** the UI SHALL display the current turn number in the gameplay status area
+- **AND** the displayed number SHALL match the authoritative game-state turn number
+
+#### Scenario: Turn number updates after each valid turn progression
+- **WHEN** a valid move is applied and turn control advances
+- **THEN** the UI SHALL update the turn number in the same state refresh cycle
+- **AND** the update SHALL be visible in both player-vs-player and player-vs-machine modes
+
+#### Scenario: Reconnection restores current turn number
+- **WHEN** a client reconnects and receives synchronized game state
+- **THEN** the UI SHALL render the current turn number from the latest state snapshot
+- **AND** SHALL NOT reset to an initial value unless a new game starts
 
 ### Requirement: Game controls
 The system SHALL provide controls for starting, restarting, and managing games.

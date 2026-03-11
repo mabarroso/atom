@@ -42,6 +42,14 @@ export function createGameStateManager () {
 
     serverState = cloneState(nextState)
     if (serverState) {
+      if (!Number.isInteger(serverState.turnNumber) && Number.isInteger(serverState.turn)) {
+        serverState.turnNumber = serverState.turn
+      }
+
+      if (!Number.isInteger(serverState.turn) && Number.isInteger(serverState.turnNumber)) {
+        serverState.turn = serverState.turnNumber
+      }
+
       serverState.lastMoveCellId = lastMoveCellId
     }
     optimisticSnapshot = null

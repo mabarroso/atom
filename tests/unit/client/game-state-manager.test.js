@@ -12,6 +12,8 @@ describe('game-state-manager', () => {
   function buildState (atoms = 0) {
     return {
       state: 'ACTIVE',
+      turn: 1,
+      turnNumber: 1,
       currentPlayer: 1,
       players: {
         1: { id: 1, name: 'Jugador 1', connected: true },
@@ -100,5 +102,15 @@ describe('game-state-manager', () => {
 
     manager.updateFromServer(buildState(2))
     expect(manager.getState().lastMoveCellId).toBe('1:1')
+  })
+
+  test('normalizes turnNumber from legacy turn field', () => {
+    const manager = createGameStateManager()
+    const state = buildState(0)
+    delete state.turnNumber
+    state.turn = 4
+
+    manager.updateFromServer(state)
+    expect(manager.getState().turnNumber).toBe(4)
   })
 })
