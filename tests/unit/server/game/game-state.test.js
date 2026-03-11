@@ -7,7 +7,7 @@ describe('GameState', () => {
 
     game.start()
     expect(game.state).toBe(GAME_STATES.ACTIVE)
-    expect(game.turnNumber).toBe(1)
+    expect(game.roundNumber).toBe(1)
 
     game.end(1)
     expect(game.state).toBe(GAME_STATES.ENDED)
@@ -19,12 +19,15 @@ describe('GameState', () => {
     game.start()
 
     expect(game.currentPlayer).toBe(1)
+    expect(game.roundNumber).toBe(1)
+
     game.switchTurn()
     expect(game.currentPlayer).toBe(2)
-    expect(game.turnNumber).toBe(2)
+    expect(game.roundNumber).toBe(1)
+
     game.switchTurn()
     expect(game.currentPlayer).toBe(1)
-    expect(game.turnNumber).toBe(3)
+    expect(game.roundNumber).toBe(2)
   })
 
   test('tracks move history', () => {
@@ -37,14 +40,15 @@ describe('GameState', () => {
     expect(game.getHistory()[0].turn).toBe(1)
   })
 
-  test('serializes authoritative turnNumber in state payload', () => {
+  test('serializes authoritative roundNumber in state payload', () => {
     const game = new GameState()
     game.start()
     game.switchTurn()
+    game.switchTurn()
 
     const serialized = game.toJSON()
-    expect(serialized.turnNumber).toBe(2)
-    expect(serialized.turn).toBe(2)
+    expect(serialized.roundNumber).toBe(2)
+    expect(serialized.turn).toBe(3)
   })
 
   test('detects winner after minimum moves', () => {

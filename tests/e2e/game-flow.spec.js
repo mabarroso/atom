@@ -51,12 +51,12 @@ test('Game initialization and first move flow', async ({ page }) => {
 
   await page.click('#btn-new-game')
   await expect(page.locator('#game-board .game-cell')).toHaveCount(36)
-  await expect(page.locator('#turn-number-indicator')).toContainText('Turno #1')
+  await expect(page.locator('#round-number-indicator')).toContainText('Ronda #1')
   await expect(page.locator('#turn-indicator')).toContainText('Turno de')
 
   await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
   await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"] .atom-dot')).toHaveCount(1)
-  await expect(page.locator('#turn-number-indicator')).toContainText('Turno #2')
+  await expect(page.locator('#round-number-indicator')).toContainText('Ronda #1')
   await expect(page.locator('#game-board .game-cell.is-last-move')).toHaveCount(1)
   await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).toHaveClass(/is-last-move/)
 })
@@ -138,7 +138,7 @@ test('Connection recovery works when second player reconnects', async ({ browser
   await reconnectPage.click('#btn-join-game')
 
   await expect(reconnectPage.locator('#game-id-value')).toContainText(gameId)
-  await expect(reconnectPage.locator('#turn-number-indicator')).toContainText('Turno #2')
+  await expect(reconnectPage.locator('#round-number-indicator')).toContainText('Ronda #1')
   await expect(reconnectPage.locator('#game-board .game-cell[data-row="2"][data-col="2"] .atom-dot')).toHaveCount(1)
 
   await reconnectContext.close()

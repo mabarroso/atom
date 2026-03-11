@@ -32,22 +32,26 @@ describe('game-engine', () => {
     expect(result.state.board.cells[0][0].atoms).toBeGreaterThanOrEqual(0)
   })
 
-  test('increments turnNumber after valid move progression', () => {
+  test('keeps roundNumber after player 1 valid move and increments after player 2 valid move', () => {
     const game = createGame(null, 6)
 
-    const result = processMove(game.gameId, 1, 0, 0)
-    expect(result.ok).toBe(true)
-    expect(result.state.turnNumber).toBe(2)
+    const resultPlayerOne = processMove(game.gameId, 1, 0, 0)
+    expect(resultPlayerOne.ok).toBe(true)
+    expect(resultPlayerOne.state.roundNumber).toBe(1)
+
+    const resultPlayerTwo = processMove(game.gameId, 2, 0, 1)
+    expect(resultPlayerTwo.ok).toBe(true)
+    expect(resultPlayerTwo.state.roundNumber).toBe(2)
   })
 
-  test('keeps turnNumber unchanged on invalid move', () => {
+  test('keeps roundNumber unchanged on invalid move', () => {
     const game = createGame(null, 6)
 
     const invalidResult = processMove(game.gameId, 2, 0, 0)
     expect(invalidResult.ok).toBe(false)
 
     const state = getGameState(game.gameId)
-    expect(state.turnNumber).toBe(1)
+    expect(state.roundNumber).toBe(1)
   })
 
   test('returns error for missing game', () => {

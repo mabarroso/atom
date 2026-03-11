@@ -14,7 +14,7 @@ function byId (id) {
 export function initGameUI (socket) {
   const gameContainer = byId('game-container')
   const boardContainer = byId('game-board')
-  const turnNumberIndicator = byId('turn-number-indicator')
+  const roundNumberIndicator = byId('round-number-indicator')
   const turnIndicator = byId('turn-indicator')
   const gameNotice = byId('game-notice')
   const playerOneIndicator = byId('player-1-indicator')
@@ -74,10 +74,12 @@ export function initGameUI (socket) {
 
     gameBoard.render(state)
 
-    const turnNumber = Number.isInteger(state.turnNumber) ? state.turnNumber : state.turn
+    const roundNumber = Number.isInteger(state.roundNumber)
+      ? state.roundNumber
+      : Math.max(1, Math.floor(((Number.isInteger(state.turn) ? state.turn : 1) + 1) / 2))
     const currentPlayerName = state.players[state.currentPlayer]?.name || `Jugador ${state.currentPlayer}`
-    if (Number.isInteger(turnNumber) && turnNumberIndicator) {
-      turnNumberIndicator.textContent = `Turno #${turnNumber}`
+    if (Number.isInteger(roundNumber) && roundNumberIndicator) {
+      roundNumberIndicator.textContent = `Ronda #${roundNumber}`
     }
     turnIndicator.textContent = `Turno de ${currentPlayerName}`
     updatePlayerIndicators(state.players, state.currentPlayer)

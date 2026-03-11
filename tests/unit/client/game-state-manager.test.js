@@ -13,7 +13,7 @@ describe('game-state-manager', () => {
     return {
       state: 'ACTIVE',
       turn: 1,
-      turnNumber: 1,
+      roundNumber: 1,
       currentPlayer: 1,
       players: {
         1: { id: 1, name: 'Jugador 1', connected: true },
@@ -104,13 +104,13 @@ describe('game-state-manager', () => {
     expect(manager.getState().lastMoveCellId).toBe('1:1')
   })
 
-  test('normalizes turnNumber from legacy turn field', () => {
+  test('normalizes roundNumber from legacy turn field', () => {
     const manager = createGameStateManager()
     const state = buildState(0)
-    delete state.turnNumber
+    delete state.roundNumber
     state.turn = 4
 
     manager.updateFromServer(state)
-    expect(manager.getState().turnNumber).toBe(4)
+    expect(manager.getState().roundNumber).toBe(2)
   })
 })

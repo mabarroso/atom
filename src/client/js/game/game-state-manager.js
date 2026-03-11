@@ -42,12 +42,13 @@ export function createGameStateManager () {
 
     serverState = cloneState(nextState)
     if (serverState) {
-      if (!Number.isInteger(serverState.turnNumber) && Number.isInteger(serverState.turn)) {
-        serverState.turnNumber = serverState.turn
+      if (!Number.isInteger(serverState.roundNumber) && Number.isInteger(serverState.turnNumber)) {
+        serverState.roundNumber = serverState.turnNumber
       }
 
-      if (!Number.isInteger(serverState.turn) && Number.isInteger(serverState.turnNumber)) {
-        serverState.turn = serverState.turnNumber
+      if (!Number.isInteger(serverState.roundNumber) && Number.isInteger(serverState.turn)) {
+        const computedRoundNumber = Math.floor((serverState.turn + 1) / 2)
+        serverState.roundNumber = Math.max(1, computedRoundNumber)
       }
 
       serverState.lastMoveCellId = lastMoveCellId
