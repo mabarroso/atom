@@ -26,6 +26,7 @@ function renderStatus (status) {
 }
 
 const socket = createSocketClient()
+window.__ATOM_SOCKET__ = socket
 renderStatus('connecting')
 initGameUI(socket)
 

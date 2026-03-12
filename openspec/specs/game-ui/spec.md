@@ -38,7 +38,7 @@ The system SHALL render each cell with visual indicators for owner, atom count, 
 #### Scenario: Cell with atoms shows count
 - **WHEN** a cell has atoms
 - **THEN** the cell SHALL display the atom count visually
-- **AND** use circles or dots to represent atoms (1-4)
+- **AND** use circles or dots to represent atoms for counts from 1 to 4
 - **AND** apply player color to the atoms
 
 #### Scenario: One atom is centered
@@ -54,6 +54,12 @@ The system SHALL render each cell with visual indicators for owner, atom count, 
 - **WHEN** a cell contains exactly 3 atoms
 - **THEN** atoms SHALL be arranged as an equilateral triangle pointing upward
 - **AND** spacing between each pair of atoms SHALL be equal
+
+#### Scenario: Cell with more than 4 atoms uses compact layout and raw total
+- **WHEN** a cell contains more than 4 atoms
+- **THEN** the cell SHALL render a stable 3-atom layout for the owning player
+- **AND** SHALL display the raw total atom count value in the remaining display slot
+- **AND** SHALL NOT truncate or cap the displayed numeric value
 
 #### Scenario: Atom spacing and edge margin are consistent
 - **WHEN** atom layouts are rendered inside a cell
@@ -204,7 +210,7 @@ The system SHALL adapt the game UI layout for different screen sizes.
 - **AND** use optimal spacing for large screens
 
 ### Requirement: Animation effects
-The system SHALL animate chain reactions with smooth visual effects.
+The system SHALL animate chain reactions with smooth visual effects and reflect retained overflow in source cells immediately after each explosion step.
 
 #### Scenario: Explosion animation is displayed
 - **WHEN** a cell explodes
@@ -215,6 +221,11 @@ The system SHALL animate chain reactions with smooth visual effects.
 - **WHEN** atoms move to adjacent cells
 - **THEN** atoms SHALL animate from source to destination
 - **AND** appear with smooth transition
+
+#### Scenario: Retained overflow is shown immediately after each explosion step
+- **WHEN** an explosion step finishes distributing one atom to each adjacent cell
+- **THEN** the source cell SHALL immediately render any retained overflow atoms for that step
+- **AND** this render SHALL occur before the next queued explosion animation step begins
 
 #### Scenario: Animations respect prefers-reduced-motion
 - **WHEN** user has `prefers-reduced-motion` enabled

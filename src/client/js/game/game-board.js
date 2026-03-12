@@ -9,8 +9,26 @@ function describeCell (row, col, cell) {
   return `Celda fila ${row + 1} columna ${col + 1}, ${cell.atoms} ${atomLabel}, Jugador ${cell.player}`
 }
 
-function renderAtoms (atoms) {
-  return Math.max(0, Math.min(4, atoms))
+function buildAtomVisual (atoms) {
+  if (atoms <= 0) {
+    return null
+  }
+
+  if (atoms <= 4) {
+    return {
+      layout: atoms,
+      visibleAtoms: atoms,
+      totalLabel: null,
+      overflow: false
+    }
+  }
+
+  return {
+    layout: 3,
+    visibleAtoms: 3,
+    totalLabel: String(atoms),
+    overflow: true
+  }
 }
 
 /**
@@ -48,14 +66,24 @@ export function createGameBoard (container, { onMove } = {}) {
         }
 
         if (cell.atoms > 0) {
-          const atomCount = renderAtoms(cell.atoms)
+          const atomVisual = buildAtomVisual(cell.atoms)
           const atomsWrap = document.createElement('span')
-          atomsWrap.className = `atoms-wrap atoms-layout-${atomCount}`
+          atomsWrap.className = `atoms-wrap atoms-layout-${atomVisual.layout}`
+          if (atomVisual.overflow) {
+            atomsWrap.classList.add('atoms-layout-overflow')
+          }
 
-          for (let index = 0; index < atomCount; index += 1) {
+          for (let index = 0; index < atomVisual.visibleAtoms; index += 1) {
             const atomDot = document.createElement('span')
             atomDot.className = 'atom-dot'
             atomsWrap.appendChild(atomDot)
+          }
+
+          if (atomVisual.totalLabel) {
+            const atomTotal = document.createElement('span')
+            atomTotal.className = 'atom-total'
+            atomTotal.textContent = atomVisual.totalLabel
+            atomsWrap.appendChild(atomTotal)
           }
 
           button.appendChild(atomsWrap)

@@ -39,6 +39,7 @@ export function initGameUI (socket) {
 
   const stateManager = createGameStateManager()
   const animationQueue = createAnimationQueue()
+  let pendingFinalAnimationState = null
   const gameBoard = createGameBoard(boardContainer, {
     onMove: (row, col) => {
       const state = stateManager.getState()
@@ -149,17 +150,36 @@ export function initGameUI (socket) {
   })
 
   socket.on('server:game:stateUpdate', ({ state, moveOrigin, animationSequence = [] }) => {
-    stateManager.updateFromServer(state, { moveOrigin })
+    if (!Array.isArray(animationSequence) || animationSequence.length === 0) {
+      pendingFinalAnimationState = null
+      stateManager.updateFromServer(state, { moveOrigin })
+      return
+    }
+
+    pendingFinalAnimationState = state
+    let shouldApplyMoveOrigin = true
+
     animationQueue.playExplosionSequence(animationSequence, (step) => {
+      const nextState = step?.board ? { ...state, board: step.board } : state
+
+      stateManager.updateFromServer(nextState, shouldApplyMoveOrigin ? { moveOrigin } : {})
+      shouldApplyMoveOrigin = false
+
       gameBoard.flashExplosion(step.row, step.col)
       gameBoard.flashTransfer(step.row, step.col)
     })
   })
 
   animationQueue.setOnIdle(() => {
-    const state = stateManager.getState()
-    if (state) {
-      stateManager.updateFromServer(state)
+    if (pendingFinalAnimationState) {
+      stateManager.updateFromServer(pendingFinalAnimationState)
+      pendingFinalAnimationState = null
+      return
+    }
+
+    const localState = stateManager.getState()
+    if (localState) {
+      stateManager.updateFromServer(localState)
     }
   })
 

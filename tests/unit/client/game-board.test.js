@@ -210,4 +210,22 @@ describe('game-board', () => {
     expect(atomsWrap.classList.contains('atoms-layout-3')).toBe(true)
     expect(atomsWrap.children).toHaveLength(3)
   })
+
+  test('uses compact three-atom layout and raw total for atom counts above four', () => {
+    const container = new FakeElement('div')
+    const board = createGameBoard(container)
+
+    board.render(buildState(null, 7))
+
+    const cell = getCell(container, 0, 0)
+    const atomsWrap = cell.children[0]
+    const dots = atomsWrap.children.filter((child) => child.classList.contains('atom-dot'))
+    const total = atomsWrap.children.find((child) => child.classList.contains('atom-total'))
+
+    expect(atomsWrap.classList.contains('atoms-layout-3')).toBe(true)
+    expect(atomsWrap.classList.contains('atoms-layout-overflow')).toBe(true)
+    expect(dots).toHaveLength(3)
+    expect(total).toBeDefined()
+    expect(total.textContent).toBe('7')
+  })
 })

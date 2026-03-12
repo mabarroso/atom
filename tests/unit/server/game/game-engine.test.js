@@ -32,6 +32,23 @@ describe('game-engine', () => {
     expect(result.state.board.cells[0][0].atoms).toBeGreaterThanOrEqual(0)
   })
 
+  test('returns animation sequence steps with post-step board snapshots', () => {
+    const game = createGame(null, 6)
+    processMove(game.gameId, 1, 1, 1)
+    processMove(game.gameId, 2, 0, 0)
+    processMove(game.gameId, 1, 1, 1)
+    processMove(game.gameId, 2, 0, 1)
+    const result = processMove(game.gameId, 1, 1, 1)
+
+    expect(result.ok).toBe(true)
+    expect(Array.isArray(result.animationSequence)).toBe(true)
+
+    if (result.animationSequence.length > 0) {
+      expect(result.animationSequence[0].board).toBeDefined()
+      expect(result.animationSequence[0].board.cells).toBeDefined()
+    }
+  })
+
   test('keeps roundNumber after player 1 valid move and increments after player 2 valid move', () => {
     const game = createGame(null, 6)
 

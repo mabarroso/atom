@@ -107,6 +107,17 @@
   left: calc(100% - var(--atom-layout-margin));
 }
 
+.atom-total {
+  position: absolute;
+  right: calc(var(--atom-layout-margin) - 2%);
+  bottom: calc(var(--atom-layout-margin) - 6%);
+  transform: translate(50%, 50%);
+  font-size: clamp(0.58rem, 1.55vw, 0.82rem);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--cell-color, #6c757d);
+}
+
 .is-current {
   box-shadow: 0 0 0 2px #212529;
 }

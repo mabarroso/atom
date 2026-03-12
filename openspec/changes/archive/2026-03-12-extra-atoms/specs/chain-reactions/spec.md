@@ -1,9 +1,5 @@
-# Chain Reactions Specification
+## MODIFIED Requirements
 
-## Purpose
-This capability covers Atom chain-reaction mechanics: explosion detection at critical mass, deterministic cascade resolution, atom redistribution to adjacent cells, and generation of ordered animation events for clients.
-
-## Requirements
 ### Requirement: Explosion detection
 The system SHALL detect when a cell reaches or exceeds critical mass and trigger an explosion.
 
@@ -48,31 +44,6 @@ The system SHALL distribute atoms from exploding cells to all adjacent cells and
 - **AND** change owner to the exploding player
 - **AND** check if the receiving cell now reaches or exceeds critical mass
 
-### Requirement: Cascade handling for chain reactions
-The system SHALL resolve cascading explosions iteratively until no cells are at critical mass.
-
-#### Scenario: Single explosion causes no cascade
-- **WHEN** a cell explodes and no adjacent cells reach critical mass
-- **THEN** the cascade SHALL complete
-- **AND** the game state SHALL be stable
-
-#### Scenario: Multiple explosions cascade
-- **WHEN** a cell explodes and causes adjacent cells to reach critical mass
-- **THEN** the system SHALL trigger explosions for those cells
-- **AND** continue resolving until all cells are below critical mass
-- **AND** process explosions in a breadth-first or queue-based order
-
-#### Scenario: Cascade depth is limited
-- **WHEN** a cascade exceeds 100 explosions
-- **THEN** the system SHALL force terminate the cascade
-- **AND** log a warning about potential infinite loop
-- **AND** stabilize the board to the current state
-
-#### Scenario: Cascade resolution is deterministic
-- **WHEN** the same board state triggers explosions
-- **THEN** the system SHALL always produce the same cascade sequence
-- **AND** ensure clients can reproduce animations reliably
-
 ### Requirement: Animation coordination
 The system SHALL generate an ordered sequence of explosion events for client animation, including immediate representation of retained overflow after each explosion step.
 
@@ -95,18 +66,3 @@ The system SHALL generate an ordered sequence of explosion events for client ani
 - **WHEN** explosion sequence is sent
 - **THEN** the system SHALL include suggested delay between animations (e.g., 300ms)
 - **AND** clients MAY adjust timing based on user preference or performance
-
-### Requirement: Chain reaction performance
-The system SHALL resolve chain reactions efficiently even for complex cascades.
-
-#### Scenario: Large cascade completes quickly
-- **WHEN** a cascade involves 50 explosions
-- **THEN** the system SHALL resolve within 100 milliseconds
-- **AND** not block other game operations
-
-#### Scenario: Memory is managed during cascades
-- **WHEN** resolving cascades
-- **THEN** the system SHALL use iterative algorithms (no recursion)
-- **AND** reuse data structures to minimize allocations
-- **AND** prevent memory leaks
-

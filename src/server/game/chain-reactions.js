@@ -53,20 +53,30 @@ function detectExplosions (board) {
 function resolveExplosion (board, row, col, player) {
   const cell = board.getCell(row, col)
   if (!cell) {
-    return []
+    return {
+      affectedCells: [],
+      remainingAtoms: 0,
+      sourcePlayer: null
+    }
   }
 
-  cell.atoms = 0
-  cell.player = null
-
   const affectedCells = board.getAdjacentCells(row, col)
+  const remainingAtoms = Math.max(0, cell.atoms - affectedCells.length)
+
+  cell.atoms = remainingAtoms
+  cell.player = remainingAtoms > 0 ? player : null
+
   affectedCells.forEach((position) => {
     const adjacentCell = board.getCell(position.row, position.col)
     adjacentCell.atoms += 1
     adjacentCell.player = player
   })
 
-  return affectedCells
+  return {
+    affectedCells,
+    remainingAtoms,
+    sourcePlayer: cell.player
+  }
 }
 
 function addToQueue (queue, queuedSet, row, col) {
@@ -120,20 +130,34 @@ function resolveCascade (board, player, maxExplosions = MAX_CASCADE_EXPLOSIONS) 
       continue
     }
 
-    const affectedCells = resolveExplosion(board, current.row, current.col, player)
+    const sourceAtomsBeforeExplosion = atoms
+    const explosionResult = resolveExplosion(board, current.row, current.col, player)
+    const affectedCells = explosionResult.affectedCells
     processed.push({
       row: current.row,
       col: current.col,
       player,
-      atoms: criticalMass,
-      timestamp: Date.now()
+      atoms: sourceAtomsBeforeExplosion,
+      timestamp: Date.now(),
+      sourceCell: {
+        row: current.row,
+        col: current.col,
+        atoms: explosionResult.remainingAtoms,
+        player: explosionResult.sourcePlayer
+      },
+      board: board.toJSON()
     })
+
+    const currentAtomsAfterExplosion = board.getAtomCount(current.row, current.col)
+    if (currentAtomsAfterExplosion >= criticalMass) {
+      addToQueue(queue, queuedSet, current.row, current.col)
+    }
 
     // Re-check impacted neighbors only, keeping cascade deterministic and efficient.
     affectedCells.forEach((position) => {
       const adjacentAtoms = board.getAtomCount(position.row, position.col)
       const adjacentCriticalMass = board.getCriticalMass(position.row, position.col)
-      if (adjacentAtoms >= adjacentCriticalMass) {
+      if (adjacentAtoms >= adjacentCriticalMass && adjacentAtoms > 0) {
         addToQueue(queue, queuedSet, position.row, position.col)
       }
     })
