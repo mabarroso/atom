@@ -94,6 +94,10 @@ class GameClient {
     this.socket.emit('client:game:move', { row, col })
   }
 
+  updateTiming (payload) {
+    this.socket.emit('client:game:updateTiming', payload)
+  }
+
   /**
    * Wait for a specific event type
    * @param {string} eventType - Event type to wait for

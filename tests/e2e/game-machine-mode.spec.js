@@ -43,7 +43,7 @@ test.describe('Machine mode browser flow', () => {
     await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).not.toHaveClass(/is-last-move/)
   })
 
-  test('Machine response includes approximately 2-second delay and no thinking message', async ({ page }) => {
+  test('Machine response uses short default delay and no thinking message', async ({ page }) => {
     await page.goto('/')
     await page.evaluate(() => {
       const machineModeInput = document.getElementById('game-mode-machine')
@@ -57,9 +57,7 @@ test.describe('Machine mode browser flow', () => {
     await page.click('#game-board .game-cell[data-row="1"][data-col="1"]')
 
     await expect(page.locator('#turn-indicator')).toContainText('Machine')
-    await page.waitForTimeout(1500)
-    await expect(page.locator('#turn-indicator')).toContainText('Machine')
-    await expect(page.locator('#turn-indicator')).toContainText('Jugador 1')
+    await expect(page.locator('#turn-indicator')).toContainText('Jugador 1', { timeout: 1500 })
 
     await expect(page.locator('#game-notice')).not.toContainText(/Pensando|Thinking/i)
   })
@@ -83,6 +81,31 @@ test.describe('Machine mode browser flow', () => {
     }, { timeout: 7000 }).toContain('Jugador 1')
 
     await expect(page.locator('#player-2-indicator')).toContainText('Machine')
+  })
+
+  test('Machine response delay control accepts 0 ms and speeds up machine turn', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => {
+      const machineModeInput = document.getElementById('game-mode-machine')
+      if (machineModeInput) {
+        machineModeInput.checked = true
+      }
+    })
+    await expect(page.locator('#game-mode-machine')).toBeChecked()
+    await page.click('#btn-new-game')
+    await expect(page.locator('#game-notice')).toContainText('Partida iniciada contra Máquina')
+
+    const machineDelayControl = page.locator('#machine-delay-control')
+    await expect(machineDelayControl).toHaveValue('100')
+
+    await machineDelayControl.evaluate((element) => {
+      element.value = '0'
+      element.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await expect(machineDelayControl).toHaveValue('0')
+
+    await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
+    await expect(page.locator('#turn-indicator')).toContainText('Jugador 1', { timeout: 1200 })
   })
 
   test('Complete flow reaches game end in Machine mode', async ({ page }) => {

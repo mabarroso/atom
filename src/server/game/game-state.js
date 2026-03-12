@@ -1,7 +1,15 @@
 const { Board } = require('./game-board')
 const {
   DEFAULT_BOARD_SIZE,
-  PLAYER_COLORS
+  PLAYER_COLORS,
+  DEFAULT_ANIMATION_DELAY,
+  MIN_ANIMATION_DELAY_MS,
+  MAX_ANIMATION_DELAY_MS,
+  ANIMATION_DELAY_STEP_MS,
+  DEFAULT_MACHINE_RESPONSE_DELAY_MS,
+  MIN_MACHINE_RESPONSE_DELAY_MS,
+  MAX_MACHINE_RESPONSE_DELAY_MS,
+  MACHINE_RESPONSE_DELAY_STEP_MS
 } = require('./constants')
 
 const GAME_STATES = {
@@ -16,6 +24,20 @@ const GAME_STATES = {
  */
 function createGameId () {
   return `game-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function clampNumber (value, min, max, fallback) {
+  const numericValue = Number(value)
+  if (!Number.isFinite(numericValue)) {
+    return fallback
+  }
+
+  return Math.min(max, Math.max(min, numericValue))
+}
+
+function toStepValue (value, min, max, step, fallback) {
+  const clamped = clampNumber(value, min, max, fallback)
+  return Math.round(clamped / step) * step
 }
 
 /**
@@ -33,6 +55,8 @@ class GameState {
     this.winReason = null
     this.roundNumber = 1
     this.turn = 1
+    this.animationDelayMs = DEFAULT_ANIMATION_DELAY
+    this.machineResponseDelayMs = DEFAULT_MACHINE_RESPONSE_DELAY_MS
     this.atomCountersVisible = false
     this.moveHistory = []
     this.lastActivityAt = Date.now()
@@ -64,6 +88,8 @@ class GameState {
     this.currentPlayer = 1
     this.roundNumber = 1
     this.turn = 1
+    this.animationDelayMs = DEFAULT_ANIMATION_DELAY
+    this.machineResponseDelayMs = DEFAULT_MACHINE_RESPONSE_DELAY_MS
     this.atomCountersVisible = false
     this.lastActivityAt = Date.now()
   }
@@ -147,6 +173,30 @@ class GameState {
     this.lastActivityAt = Date.now()
   }
 
+  setTimingSettings ({ animationDelayMs, machineResponseDelayMs } = {}) {
+    if (animationDelayMs !== undefined) {
+      this.animationDelayMs = toStepValue(
+        animationDelayMs,
+        MIN_ANIMATION_DELAY_MS,
+        MAX_ANIMATION_DELAY_MS,
+        ANIMATION_DELAY_STEP_MS,
+        DEFAULT_ANIMATION_DELAY
+      )
+    }
+
+    if (machineResponseDelayMs !== undefined) {
+      this.machineResponseDelayMs = toStepValue(
+        machineResponseDelayMs,
+        MIN_MACHINE_RESPONSE_DELAY_MS,
+        MAX_MACHINE_RESPONSE_DELAY_MS,
+        MACHINE_RESPONSE_DELAY_STEP_MS,
+        DEFAULT_MACHINE_RESPONSE_DELAY_MS
+      )
+    }
+
+    this.lastActivityAt = Date.now()
+  }
+
   getHistory () {
     return [...this.moveHistory]
   }
@@ -198,6 +248,8 @@ class GameState {
       winReason: this.winReason,
       turn: this.turn,
       roundNumber: this.roundNumber,
+      animationDelayMs: this.animationDelayMs,
+      machineResponseDelayMs: this.machineResponseDelayMs,
       atomCountersVisible: this.atomCountersVisible,
       atomCounters: this.getAtomCounters(),
       players: this.players,

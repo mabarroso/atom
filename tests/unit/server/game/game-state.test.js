@@ -75,6 +75,36 @@ describe('GameState', () => {
     expect(serialized.atomCounters.total).toBe(3)
   })
 
+  test('serializes default timing settings in state payload', () => {
+    const game = new GameState()
+    game.start()
+
+    const serialized = game.toJSON()
+    expect(serialized.animationDelayMs).toBe(300)
+    expect(serialized.machineResponseDelayMs).toBe(100)
+  })
+
+  test('updates timing settings with bounds and steps', () => {
+    const game = new GameState()
+    game.start()
+
+    game.setTimingSettings({
+      animationDelayMs: 63,
+      machineResponseDelayMs: -20
+    })
+
+    expect(game.toJSON().animationDelayMs).toBe(50)
+    expect(game.toJSON().machineResponseDelayMs).toBe(0)
+
+    game.setTimingSettings({
+      animationDelayMs: 1500,
+      machineResponseDelayMs: 5090
+    })
+
+    expect(game.toJSON().animationDelayMs).toBe(1200)
+    expect(game.toJSON().machineResponseDelayMs).toBe(5000)
+  })
+
   test('detects winner after minimum moves', () => {
     const game = new GameState()
     game.start()

@@ -1,7 +1,17 @@
 import { createGameStateManager } from './game-state-manager.js'
 import { createAnimationQueue } from './animation-queue.js'
 import { createGameBoard } from './game-board.js'
-import { DEFAULT_BOARD_SIZE } from './constants.js'
+import {
+  DEFAULT_BOARD_SIZE,
+  DEFAULT_ANIMATION_DELAY,
+  MIN_ANIMATION_DELAY_MS,
+  MAX_ANIMATION_DELAY_MS,
+  ANIMATION_DELAY_STEP_MS,
+  DEFAULT_MACHINE_RESPONSE_DELAY_MS,
+  MIN_MACHINE_RESPONSE_DELAY_MS,
+  MAX_MACHINE_RESPONSE_DELAY_MS,
+  MACHINE_RESPONSE_DELAY_STEP_MS
+} from './constants.js'
 
 function byId (id) {
   return document.getElementById(id)
@@ -28,6 +38,8 @@ export function initGameUI (socket) {
   const gameModeHuman = byId('game-mode-human')
   const gameModeMachine = byId('game-mode-machine')
   const gameIdValue = byId('game-id-value')
+  const animationDelayControl = byId('animation-delay-control')
+  const machineDelayControl = byId('machine-delay-control')
   const atomCountersPanel = byId('atom-counters-panel')
   const atomCounterPlayerOne = byId('atom-counter-player-1')
   const atomCounterPlayerTwo = byId('atom-counter-player-2')
@@ -53,6 +65,53 @@ export function initGameUI (socket) {
   })
 
   let joinedGameId = null
+
+  function clampValue (value, min, max, fallback, step) {
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed)) {
+      return fallback
+    }
+
+    const clamped = Math.min(max, Math.max(min, parsed))
+    return Math.round(clamped / step) * step
+  }
+
+  function getTimingFromState (state) {
+    return {
+      animationDelayMs: clampValue(
+        state?.animationDelayMs,
+        MIN_ANIMATION_DELAY_MS,
+        MAX_ANIMATION_DELAY_MS,
+        DEFAULT_ANIMATION_DELAY,
+        ANIMATION_DELAY_STEP_MS
+      ),
+      machineResponseDelayMs: clampValue(
+        state?.machineResponseDelayMs,
+        MIN_MACHINE_RESPONSE_DELAY_MS,
+        MAX_MACHINE_RESPONSE_DELAY_MS,
+        DEFAULT_MACHINE_RESPONSE_DELAY_MS,
+        MACHINE_RESPONSE_DELAY_STEP_MS
+      )
+    }
+  }
+
+  function emitTimingUpdate (nextTiming) {
+    socket.emit('client:game:updateTiming', nextTiming)
+  }
+
+  function updateTimingControls (state) {
+    if (!animationDelayControl || !machineDelayControl) {
+      return
+    }
+
+    const timing = getTimingFromState(state)
+    animationDelayControl.value = String(timing.animationDelayMs)
+    machineDelayControl.value = String(timing.machineResponseDelayMs)
+
+    const controlsEnabled = state.state === 'ACTIVE'
+    animationDelayControl.disabled = !controlsEnabled
+    machineDelayControl.disabled = !controlsEnabled
+  }
 
   function getLocalPlayerId (state) {
     if (!state || !socket.id) {
@@ -127,6 +186,7 @@ export function initGameUI (socket) {
     turnIndicator.textContent = `Turno de ${currentPlayerName}`
     updatePlayerIndicators(state.players, state.currentPlayer)
     updateAtomCounters(state)
+    updateTimingControls(state)
 
     if (state.state === 'ENDED') {
       const reason = state.winReason === 'forfeit' ? ' por abandono' : ''
@@ -244,6 +304,42 @@ export function initGameUI (socket) {
 
   revealCountersButton?.addEventListener('click', () => {
     socket.emit('client:game:revealAtomCounters')
+  })
+
+  animationDelayControl?.addEventListener('change', () => {
+    const state = stateManager.getState()
+    if (!state || state.state !== 'ACTIVE') {
+      return
+    }
+
+    const animationDelayMs = clampValue(
+      animationDelayControl.value,
+      MIN_ANIMATION_DELAY_MS,
+      MAX_ANIMATION_DELAY_MS,
+      DEFAULT_ANIMATION_DELAY,
+      ANIMATION_DELAY_STEP_MS
+    )
+
+    animationDelayControl.value = String(animationDelayMs)
+    emitTimingUpdate({ animationDelayMs })
+  })
+
+  machineDelayControl?.addEventListener('change', () => {
+    const state = stateManager.getState()
+    if (!state || state.state !== 'ACTIVE') {
+      return
+    }
+
+    const machineResponseDelayMs = clampValue(
+      machineDelayControl.value,
+      MIN_MACHINE_RESPONSE_DELAY_MS,
+      MAX_MACHINE_RESPONSE_DELAY_MS,
+      DEFAULT_MACHINE_RESPONSE_DELAY_MS,
+      MACHINE_RESPONSE_DELAY_STEP_MS
+    )
+
+    machineDelayControl.value = String(machineResponseDelayMs)
+    emitTimingUpdate({ machineResponseDelayMs })
   })
 
   joinGameButton.addEventListener('click', () => {

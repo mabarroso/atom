@@ -88,7 +88,7 @@ function processMove (gameId, player, row, col) {
     }
   }
 
-  const cascadeResult = resolveCascade(game.board, player)
+  const cascadeResult = resolveCascade(game.board, player, undefined, game.animationDelayMs)
   game.appendMove({
     player,
     row,

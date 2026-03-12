@@ -74,7 +74,7 @@ The system SHALL resolve cascading explosions iteratively until no cells are at 
 - **AND** ensure clients can reproduce animations reliably
 
 ### Requirement: Animation coordination
-The system SHALL generate an ordered sequence of explosion events for client animation, including immediate representation of retained overflow after each explosion step.
+The system SHALL generate an ordered sequence of explosion events for client animation, include immediate representation of retained overflow after each explosion step, and include authoritative timing metadata driven by configurable match settings.
 
 #### Scenario: Explosion sequence is generated
 - **WHEN** explosions are resolved on the server
@@ -91,10 +91,15 @@ The system SHALL generate an ordered sequence of explosion events for client ani
 - **THEN** the explosion event sequence SHALL include sufficient state for clients to render the retained source-cell atoms immediately after that step
 - **AND** the rendered state SHALL match the authoritative post-step board state
 
-#### Scenario: Animation timing is configurable
+#### Scenario: Animation timing is configurable per match
 - **WHEN** explosion sequence is sent
-- **THEN** the system SHALL include suggested delay between animations (e.g., 300ms)
-- **AND** clients MAY adjust timing based on user preference or performance
+- **THEN** the system SHALL include the configured animation delay from authoritative match timing settings
+- **AND** all connected clients SHALL use that value for subsequent explosion-step playback
+
+#### Scenario: Animation timing updates apply to future sequences
+- **WHEN** match animation timing is changed during active gameplay
+- **THEN** already-generated sequences MAY keep their existing delay values
+- **AND** newly generated sequences SHALL use the updated configured delay
 
 ### Requirement: Chain reaction performance
 The system SHALL resolve chain reactions efficiently even for complex cascades.

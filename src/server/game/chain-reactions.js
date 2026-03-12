@@ -110,7 +110,7 @@ function generateAnimationSequence (events, delay = DEFAULT_ANIMATION_DELAY) {
  * @param {number} maxExplosions
  * @returns {{events:Array<object>,truncated:boolean,animationSequence:Array<object>}}
  */
-function resolveCascade (board, player, maxExplosions = MAX_CASCADE_EXPLOSIONS) {
+function resolveCascade (board, player, maxExplosions = MAX_CASCADE_EXPLOSIONS, animationDelay = DEFAULT_ANIMATION_DELAY) {
   const queue = []
   const queuedSet = new Set()
   const processed = []
@@ -166,7 +166,7 @@ function resolveCascade (board, player, maxExplosions = MAX_CASCADE_EXPLOSIONS) 
   return {
     events: processed,
     truncated: queue.length > 0,
-    animationSequence: generateAnimationSequence(processed)
+    animationSequence: generateAnimationSequence(processed, animationDelay)
   }
 }
 

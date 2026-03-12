@@ -14,6 +14,8 @@ describe('game-state-manager', () => {
       state: 'ACTIVE',
       turn: 1,
       roundNumber: 1,
+      animationDelayMs: 300,
+      machineResponseDelayMs: 100,
       currentPlayer: 1,
       players: {
         1: { id: 1, name: 'Jugador 1', connected: true },
@@ -112,5 +114,16 @@ describe('game-state-manager', () => {
 
     manager.updateFromServer(state)
     expect(manager.getState().roundNumber).toBe(2)
+  })
+
+  test('preserves authoritative timing values from server state', () => {
+    const manager = createGameStateManager()
+    const state = buildState(0)
+    state.animationDelayMs = 150
+    state.machineResponseDelayMs = 0
+
+    manager.updateFromServer(state)
+    expect(manager.getState().animationDelayMs).toBe(150)
+    expect(manager.getState().machineResponseDelayMs).toBe(0)
   })
 })

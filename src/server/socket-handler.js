@@ -9,8 +9,6 @@ const {
   cleanupIdleGames
 } = require('./game/game-engine')
 
-const MACHINE_MOVE_DELAY_MS = 2000
-
 function safeHandler (socket, handler) {
   return (...args) => {
     try {
@@ -187,6 +185,10 @@ function registerSocketHandlers (io) {
           return
         }
 
+        const machineDelayMs = Number.isFinite(result.state.machineResponseDelayMs)
+          ? Math.max(0, Number(result.state.machineResponseDelayMs))
+          : 0
+
         setTimeout(() => {
           const game = getGame(assignment.gameId)
           if (!game || game.state !== 'ACTIVE' || game.currentPlayer !== 2) {
@@ -229,8 +231,39 @@ function registerSocketHandlers (io) {
               state: machineResult.state
             })
           }
-        }, MACHINE_MOVE_DELAY_MS)
+        }, machineDelayMs)
       }
+    }))
+
+    socket.on('client:game:updateTiming', safeHandler(socket, (payload = {}) => {
+      const assignment = socketToPlayer.get(socket.id)
+      if (!assignment) {
+        socket.emit('error:game:notFound', { message: 'Partida no encontrada' })
+        return
+      }
+
+      const game = getGame(assignment.gameId)
+      if (!game) {
+        socket.emit('error:game:notFound', { message: 'Partida no encontrada' })
+        return
+      }
+
+      if (game.state !== 'ACTIVE') {
+        socket.emit('error:game:notActive', { message: 'La partida no está activa' })
+        return
+      }
+
+      game.setTimingSettings({
+        animationDelayMs: payload.animationDelayMs,
+        machineResponseDelayMs: payload.machineResponseDelayMs
+      })
+
+      const state = game.toJSON()
+      io.to(state.roomId).emit('server:game:stateUpdate', {
+        gameId: assignment.gameId,
+        machineMode: state.machineMode,
+        state
+      })
     }))
 
     socket.on('client:game:revealAtomCounters', safeHandler(socket, () => {

@@ -77,4 +77,16 @@ describe('chain-reactions', () => {
 
     expect(toStableProjection(first.animationSequence)).toEqual(toStableProjection(second.animationSequence))
   })
+
+  test('uses configured animation delay for generated sequence', () => {
+    const board = new Board(4)
+    placeAtoms(board, 1, 1, 1, 9)
+
+    const result = resolveCascade(board, 1, undefined, 120)
+
+    expect(result.animationSequence[0].delay).toBe(0)
+    if (result.animationSequence.length > 1) {
+      expect(result.animationSequence[1].delay).toBe(120)
+    }
+  })
 })

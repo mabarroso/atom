@@ -329,6 +329,51 @@ describeMultiClient('Machine mode integration scenarios', () => {
     expect(status.gameId).toEqual(expect.any(String))
   })
 
+  test('synchronizes timing settings and supports zero machine delay', async () => {
+    client1.socket.emit('client:game:start', { boardSize: 6, machineMode: true })
+    const started = await client1.waitForEvent('game:started')
+    const game = getGame(started.data.gameId)
+
+    client1.updateTiming({
+      animationDelayMs: 150,
+      machineResponseDelayMs: 0
+    })
+
+    const syncedState = await client1.waitForState((state) => {
+      return state.animationDelayMs === 150 && state.machineResponseDelayMs === 0
+    }, 3000)
+
+    expect(syncedState.animationDelayMs).toBe(150)
+    expect(syncedState.machineResponseDelayMs).toBe(0)
+
+    client1.events = []
+    game.board.cells[1][1] = { player: 1, atoms: 9 }
+    game.currentPlayer = 1
+
+    client1.makeMove(0, 0)
+    const cascadeUpdate = await client1.waitForEvent('game:stateUpdate', 3000)
+    const sequence = cascadeUpdate.data.animationSequence || []
+
+    if (sequence.length > 1) {
+      expect(sequence[1].delay).toBe(150)
+    }
+
+    const startTime = Date.now()
+    const machineMovePromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Timeout waiting machine move with zero delay')), 2500)
+      client1.socket.once('server:game:machineMove', (payload) => {
+        clearTimeout(timeout)
+        resolve(payload)
+      })
+    })
+
+    client1.makeMove(0, 0)
+    await machineMovePromise
+
+    const elapsedMs = Date.now() - startTime
+    expect(elapsedMs).toBeLessThan(1200)
+  }, 12000)
+
   test('Machine move triggers chain reaction with correct ownership conversion', async () => {
     client1.socket.emit('client:game:start', { boardSize: 4, machineMode: true })
     const started = await client1.waitForEvent('game:started')

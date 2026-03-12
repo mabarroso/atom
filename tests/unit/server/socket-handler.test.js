@@ -106,4 +106,58 @@ describe('socket handlers', () => {
       message: 'Solo Jugador 1 puede revelar contadores'
     })
   })
+
+  it('Timing updates are accepted and synchronized to room state', () => {
+    const callbacks = {}
+    const roomEmit = jest.fn()
+    const io = {
+      on: jest.fn((event, callback) => {
+        callbacks[event] = callback
+      }),
+      emit: jest.fn(),
+      to: jest.fn(() => ({ emit: roomEmit })),
+      engine: { clientsCount: 2 }
+    }
+
+    const socketOneEvents = {}
+    const socketTwoEvents = {}
+    const socketOne = {
+      id: 'socket-1',
+      on: jest.fn((event, callback) => {
+        socketOneEvents[event] = callback
+      }),
+      emit: jest.fn(),
+      join: jest.fn()
+    }
+    const socketTwo = {
+      id: 'socket-2',
+      on: jest.fn((event, callback) => {
+        socketTwoEvents[event] = callback
+      }),
+      emit: jest.fn(),
+      join: jest.fn()
+    }
+
+    registerSocketHandlers(io)
+    callbacks.connection(socketOne)
+    callbacks.connection(socketTwo)
+
+    socketOneEvents['client:game:start']({ boardSize: 6 })
+
+    const startCall = roomEmit.mock.calls.find(([eventName]) => eventName === 'server:game:started')
+    const gameId = startCall?.[1]?.gameId
+
+    socketTwoEvents['client:game:start']({ boardSize: 6, gameId })
+    roomEmit.mockClear()
+
+    socketOneEvents['client:game:updateTiming']({
+      animationDelayMs: 150,
+      machineResponseDelayMs: 0
+    })
+
+    const stateUpdateCall = roomEmit.mock.calls.find(([eventName]) => eventName === 'server:game:stateUpdate')
+    expect(stateUpdateCall).toBeDefined()
+    expect(stateUpdateCall[1].state.animationDelayMs).toBe(150)
+    expect(stateUpdateCall[1].state.machineResponseDelayMs).toBe(0)
+  })
 })
