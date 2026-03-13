@@ -93,15 +93,15 @@ describe('GameState', () => {
       machineResponseDelayMs: -20
     })
 
-    expect(game.toJSON().animationDelayMs).toBe(50)
+    expect(game.toJSON().animationDelayMs).toBe(100)
     expect(game.toJSON().machineResponseDelayMs).toBe(0)
 
     game.setTimingSettings({
-      animationDelayMs: 1500,
+      animationDelayMs: 24120,
       machineResponseDelayMs: 5090
     })
 
-    expect(game.toJSON().animationDelayMs).toBe(1200)
+    expect(game.toJSON().animationDelayMs).toBe(24000)
     expect(game.toJSON().machineResponseDelayMs).toBe(5000)
   })
 

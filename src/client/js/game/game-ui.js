@@ -31,6 +31,9 @@ export function initGameUI (socket) {
   const playerTwoIndicator = byId('player-2-indicator')
   const newGameButton = byId('btn-new-game')
   const restartButton = byId('btn-restart-game')
+  const openSettingsButton = byId('btn-open-settings')
+  const closeSettingsButton = byId('btn-close-settings')
+  const settingsPanel = byId('settings-panel')
   const revealCountersButton = byId('btn-reveal-counters')
   const joinGameButton = byId('btn-join-game')
   const joinGameInput = byId('join-game-id')
@@ -65,6 +68,18 @@ export function initGameUI (socket) {
   })
 
   let joinedGameId = null
+  let isSettingsPanelOpen = false
+
+  function setSettingsPanelOpen (nextOpen) {
+    isSettingsPanelOpen = Boolean(nextOpen)
+    if (settingsPanel) {
+      settingsPanel.classList.toggle('d-none', !isSettingsPanelOpen)
+    }
+
+    if (openSettingsButton) {
+      openSettingsButton.setAttribute('aria-expanded', isSettingsPanelOpen ? 'true' : 'false')
+    }
+  }
 
   function clampValue (value, min, max, fallback, step) {
     const parsed = Number(value)
@@ -304,6 +319,14 @@ export function initGameUI (socket) {
 
   revealCountersButton?.addEventListener('click', () => {
     socket.emit('client:game:revealAtomCounters')
+  })
+
+  openSettingsButton?.addEventListener('click', () => {
+    setSettingsPanelOpen(!isSettingsPanelOpen)
+  })
+
+  closeSettingsButton?.addEventListener('click', () => {
+    setSettingsPanelOpen(false)
   })
 
   animationDelayControl?.addEventListener('change', () => {

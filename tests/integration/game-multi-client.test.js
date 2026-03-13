@@ -374,6 +374,21 @@ describeMultiClient('Machine mode integration scenarios', () => {
     expect(elapsedMs).toBeLessThan(1200)
   }, 12000)
 
+  test('clamps animation timing updates to 24000 ms max with 100 ms step', async () => {
+    client1.socket.emit('client:game:start', { boardSize: 6, machineMode: true })
+    await client1.waitForEvent('game:started')
+
+    client1.updateTiming({
+      animationDelayMs: 24120
+    })
+
+    const syncedState = await client1.waitForState((state) => {
+      return state.animationDelayMs === 24000
+    }, 3000)
+
+    expect(syncedState.animationDelayMs).toBe(24000)
+  }, 12000)
+
   test('Machine move triggers chain reaction with correct ownership conversion', async () => {
     client1.socket.emit('client:game:start', { boardSize: 4, machineMode: true })
     const started = await client1.waitForEvent('game:started')

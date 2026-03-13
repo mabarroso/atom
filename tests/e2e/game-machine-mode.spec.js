@@ -95,6 +95,7 @@ test.describe('Machine mode browser flow', () => {
     await page.click('#btn-new-game')
     await expect(page.locator('#game-notice')).toContainText('Partida iniciada contra Máquina')
 
+    await page.click('#btn-open-settings')
     const machineDelayControl = page.locator('#machine-delay-control')
     await expect(machineDelayControl).toHaveValue('100')
 

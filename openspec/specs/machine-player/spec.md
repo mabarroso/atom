@@ -2,9 +2,7 @@
 
 ## Purpose
 This capability covers AI decision-making logic for Player 2 in single-player mode. Implements probabilistic move selection following 23 documented decision rules, board analysis for cell type classification and adjacency evaluation, and move selection with logging support.
-
 ## Requirements
-
 ### Requirement: Board analysis
 The system SHALL analyze the game board to identify cell types, critical mass states, and player ownership for AI decision-making.
 
@@ -88,27 +86,31 @@ The system SHALL log each decision for debugging and analytics purposes.
 - **AND** include warning for unexpected fallbacks
 
 ### Requirement: Thinking delay
-The system SHALL use configurable machine response delay before executing Machine move, including `0 ms`, to support match pacing controls.
+The system SHALL use configurable machine response delay before executing Machine move, including `0 ms`, to support match pacing controls and synchronized configuration updates.
 
-#### Scenario: Delay before move broadcast uses configured value
-- **WHEN** Machine selects a move
-- **THEN** the system SHALL wait the configured machine response delay before applying move
-- **AND** not display visible "thinking" message to client
+#### Scenario: Machine player responds automatically
+- **WHEN** it is the machine player's turn
+- **THEN** the machine SHALL select a valid move
+- **AND** execute the move after the configured machine response delay
 
-#### Scenario: Zero-delay machine response is supported
+#### Scenario: Machine response delay is configurable
+- **WHEN** a user updates match timing settings
+- **THEN** the system SHALL apply the configured machine response delay for future machine turns
+- **AND** SHALL preserve current turn resolution correctness
+
+#### Scenario: Machine response supports zero delay
 - **WHEN** configured machine response delay is `0 ms`
-- **THEN** the system SHALL execute the Machine move without additional artificial wait
-- **AND** preserve the same move-validation and turn-progression rules
+- **THEN** the machine move SHALL be executed immediately after turn-transition processing completes
 
-#### Scenario: Delay does not block server
-- **WHEN** machine response delay is active
-- **THEN** the system SHALL use non-blocking scheduling
-- **AND** allow other game operations to continue
+#### Scenario: Machine response delay supports grouped-control range and step
+- **WHEN** machine response timing settings are validated or applied
+- **THEN** the system SHALL accept values from `0` to `5000 ms`
+- **AND** SHALL enforce `100 ms` increments
 
-#### Scenario: Updated delay applies to subsequent machine turns
-- **WHEN** machine response delay is changed during an active match
-- **THEN** already scheduled moves MAY keep their original delay
-- **AND** future machine turns SHALL use the updated delay value
+#### Scenario: Timing settings remain synchronized for all clients
+- **WHEN** any connected client updates machine response timing
+- **THEN** the authoritative value SHALL be broadcast to all connected clients
+- **AND** reconnecting clients SHALL receive the latest configured value in initial state synchronization
 
 ### Requirement: Difficulty level support
 The system SHALL support configurable difficulty levels for future extensibility.
@@ -122,3 +124,4 @@ The system SHALL support configurable difficulty levels for future extensibility
 - **WHEN** difficulty level changes (future feature)
 - **THEN** the system SHALL apply adjusted probabilities
 - **AND** maintain same rule evaluation logic
+

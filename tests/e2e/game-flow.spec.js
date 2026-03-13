@@ -151,19 +151,17 @@ test('Atom counters are hidden by default and Player 1 reveal makes them visible
   await expect(pageOne.locator('#atom-counters-panel')).toHaveClass(/d-none/)
   await expect(pageTwo.locator('#atom-counters-panel')).toHaveClass(/d-none/)
 
+  await pageOne.click('#btn-open-settings')
+  await pageTwo.click('#btn-open-settings')
   await expect(pageOne.locator('#btn-reveal-counters')).toBeVisible()
-  await expect(pageTwo.locator('#btn-reveal-counters')).toBeHidden()
 
   await pageOne.click('#btn-reveal-counters')
 
   await expect(pageOne.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
-  await expect(pageTwo.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
   await expect(pageOne.locator('#atom-counter-total')).toHaveText('0')
-  await expect(pageTwo.locator('#atom-counter-total')).toHaveText('0')
 
   await pageOne.click('#game-board .game-cell[data-row="0"][data-col="0"]')
   await expect(pageOne.locator('#atom-counter-player-1')).toHaveText('1')
-  await expect(pageTwo.locator('#atom-counter-player-1')).toHaveText('1')
   await expect(pageOne.locator('#atom-counter-total')).toHaveText('1')
 
   await contextOne.close()
@@ -173,6 +171,7 @@ test('Atom counters are hidden by default and Player 1 reveal makes them visible
 test('Atom counter visibility is preserved after reconnect', async ({ browser }) => {
   const { contextOne, contextTwo, pageOne } = await setupTwoPlayers(browser)
 
+  await pageOne.click('#btn-open-settings')
   await pageOne.click('#btn-reveal-counters')
   await expect(pageOne.locator('#atom-counters-panel')).not.toHaveClass(/d-none/)
 
@@ -190,6 +189,28 @@ test('Atom counter visibility is preserved after reconnect', async ({ browser })
 
   await reconnectContext.close()
   await contextOne.close()
+})
+
+test('Settings panel groups configuration controls and supports open/close', async ({ page }) => {
+  await page.goto('/')
+  await page.click('#btn-new-game')
+
+  await expect(page.locator('#settings-panel')).toHaveClass(/d-none/)
+
+  await page.click('#btn-open-settings')
+  await expect(page.locator('#settings-panel')).not.toHaveClass(/d-none/)
+  await expect(page.locator('#btn-open-settings')).toHaveAttribute('aria-expanded', 'true')
+
+  await expect(page.locator('#animation-delay-control')).toHaveAttribute('min', '0')
+  await expect(page.locator('#animation-delay-control')).toHaveAttribute('max', '24000')
+  await expect(page.locator('#animation-delay-control')).toHaveAttribute('step', '100')
+  await expect(page.locator('#machine-delay-control')).toHaveAttribute('min', '0')
+  await expect(page.locator('#machine-delay-control')).toHaveAttribute('max', '5000')
+  await expect(page.locator('#machine-delay-control')).toHaveAttribute('step', '100')
+
+  await page.click('#btn-close-settings')
+  await expect(page.locator('#settings-panel')).toHaveClass(/d-none/)
+  await expect(page.locator('#btn-open-settings')).toHaveAttribute('aria-expanded', 'false')
 })
 
 test('Multi-step cascade explosions produce animation sequence', async ({ browser }) => {

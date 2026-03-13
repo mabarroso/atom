@@ -2,7 +2,6 @@
 
 ## Purpose
 This capability covers Atom chain-reaction mechanics: explosion detection at critical mass, deterministic cascade resolution, atom redistribution to adjacent cells, and generation of ordered animation events for clients.
-
 ## Requirements
 ### Requirement: Explosion detection
 The system SHALL detect when a cell reaches or exceeds critical mass and trigger an explosion.
@@ -95,6 +94,11 @@ The system SHALL generate an ordered sequence of explosion events for client ani
 - **WHEN** explosion sequence is sent
 - **THEN** the system SHALL include the configured animation delay from authoritative match timing settings
 - **AND** all connected clients SHALL use that value for subsequent explosion-step playback
+
+#### Scenario: Animation delay supports extended range and step
+- **WHEN** animation timing settings are validated or applied
+- **THEN** the system SHALL accept values from `0` to `24000 ms`
+- **AND** SHALL enforce `100 ms` increments
 
 #### Scenario: Animation timing updates apply to future sequences
 - **WHEN** match animation timing is changed during active gameplay

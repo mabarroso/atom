@@ -140,7 +140,7 @@ The system SHALL display which player's turn it is with clear visual indication 
 - **AND** SHALL NOT reset to an initial value unless a new game starts
 
 ### Requirement: Game controls
-The system SHALL provide controls for starting, restarting, managing games, revealing atom counters according to player permissions, and modifying match timing settings.
+The system SHALL provide controls for starting, restarting, managing games, revealing atom counters according to player permissions, and modifying match timing settings through a dedicated settings panel.
 
 #### Scenario: New game button is available
 - **WHEN** in SETUP or ENDED state
@@ -158,6 +158,21 @@ The system SHALL provide controls for starting, restarting, managing games, reve
 - **THEN** all buttons and timing inputs SHALL have descriptive `aria-label` attributes
 - **AND** be keyboard accessible
 - **AND** meet minimum 44x44px touch target size for interactive controls
+
+#### Scenario: Settings panel can be opened from game controls
+- **WHEN** a user activates the settings button
+- **THEN** the UI SHALL open a settings panel containing configuration options
+- **AND** the panel SHALL be visible in the current game view
+
+#### Scenario: Settings panel can be closed with dedicated button
+- **WHEN** a user activates the panel close button
+- **THEN** the UI SHALL hide the settings panel
+- **AND** gameplay state SHALL remain unchanged
+
+#### Scenario: Reveal counters action is available inside settings panel
+- **WHEN** the settings panel is open
+- **THEN** the reveal counters button SHALL be present inside the panel
+- **AND** reveal behavior SHALL keep existing authoritative permission rules
 
 #### Scenario: Atom counters are hidden by default
 - **WHEN** a game starts or restarts
@@ -179,20 +194,25 @@ The system SHALL provide controls for starting, restarting, managing games, reve
 - **THEN** the UI SHALL render counters visible or hidden according to authoritative visibility state
 - **AND** rendered values SHALL match authoritative counts from synchronized state
 
-#### Scenario: Timing controls are visible during active gameplay
-- **WHEN** timing settings are available for the current match
-- **THEN** the UI SHALL show one control for animation speed and one control for machine response time
+#### Scenario: Timing controls are visible inside settings panel during active gameplay
+- **WHEN** timing settings are available for the current match and settings panel is open
+- **THEN** the UI SHALL show one control for animation speed and one control for machine response time inside the panel
 - **AND** each control SHALL display the current authoritative value
+
+#### Scenario: Animation speed control supports full configured range
+- **WHEN** animation speed is edited from settings panel
+- **THEN** the UI SHALL allow values from `0` to `24000 ms`
+- **AND** SHALL enforce `100 ms` increments
+
+#### Scenario: Machine response control supports full configured range
+- **WHEN** machine response time is edited from settings panel
+- **THEN** the UI SHALL allow values from `0` to `5000 ms`
+- **AND** SHALL enforce `100 ms` increments
 
 #### Scenario: Timing control updates are synchronized
 - **WHEN** a timing control value is changed and accepted by authoritative game state
 - **THEN** the UI SHALL update displayed timing values for all connected clients in the same match
 - **AND** subsequent gameplay pacing SHALL use the updated values
-
-#### Scenario: Machine response time accepts zero milliseconds
-- **WHEN** machine response time is set to `0`
-- **THEN** the UI SHALL accept and display `0 ms` as a valid value
-- **AND** machine turns SHALL remain functional without introducing extra artificial delay
 
 #### Scenario: Reconnection restores timing control values
 - **WHEN** a client reconnects and receives synchronized state
