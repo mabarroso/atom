@@ -43,6 +43,8 @@ export function initGameUI (socket) {
   const gameIdValue = byId('game-id-value')
   const animationDelayControl = byId('animation-delay-control')
   const machineDelayControl = byId('machine-delay-control')
+  const animationDelayValue = byId('animation-delay-value')
+  const machineDelayValue = byId('machine-delay-value')
   const atomCountersPanel = byId('atom-counters-panel')
   const atomCounterPlayerOne = byId('atom-counter-player-1')
   const atomCounterPlayerTwo = byId('atom-counter-player-2')
@@ -122,6 +124,14 @@ export function initGameUI (socket) {
     const timing = getTimingFromState(state)
     animationDelayControl.value = String(timing.animationDelayMs)
     machineDelayControl.value = String(timing.machineResponseDelayMs)
+
+    if (animationDelayValue) {
+      animationDelayValue.textContent = String(timing.animationDelayMs)
+    }
+
+    if (machineDelayValue) {
+      machineDelayValue.textContent = String(timing.machineResponseDelayMs)
+    }
 
     const controlsEnabled = state.state === 'ACTIVE'
     animationDelayControl.disabled = !controlsEnabled
@@ -344,6 +354,9 @@ export function initGameUI (socket) {
     )
 
     animationDelayControl.value = String(animationDelayMs)
+    if (animationDelayValue) {
+      animationDelayValue.textContent = String(animationDelayMs)
+    }
     emitTimingUpdate({ animationDelayMs })
   })
 
@@ -362,6 +375,9 @@ export function initGameUI (socket) {
     )
 
     machineDelayControl.value = String(machineResponseDelayMs)
+    if (machineDelayValue) {
+      machineDelayValue.textContent = String(machineResponseDelayMs)
+    }
     emitTimingUpdate({ machineResponseDelayMs })
   })
 

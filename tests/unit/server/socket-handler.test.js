@@ -157,7 +157,7 @@ describe('socket handlers', () => {
 
     const stateUpdateCall = roomEmit.mock.calls.find(([eventName]) => eventName === 'server:game:stateUpdate')
     expect(stateUpdateCall).toBeDefined()
-    expect(stateUpdateCall[1].state.animationDelayMs).toBe(150)
+    expect(stateUpdateCall[1].state.animationDelayMs).toBe(200)
     expect(stateUpdateCall[1].state.machineResponseDelayMs).toBe(0)
   })
 })

@@ -201,16 +201,61 @@ test('Settings panel groups configuration controls and supports open/close', asy
   await expect(page.locator('#settings-panel')).not.toHaveClass(/d-none/)
   await expect(page.locator('#btn-open-settings')).toHaveAttribute('aria-expanded', 'true')
 
+  await expect(page.locator('#animation-delay-control')).toHaveAttribute('type', 'range')
+  await expect(page.locator('#machine-delay-control')).toHaveAttribute('type', 'range')
   await expect(page.locator('#animation-delay-control')).toHaveAttribute('min', '0')
   await expect(page.locator('#animation-delay-control')).toHaveAttribute('max', '24000')
   await expect(page.locator('#animation-delay-control')).toHaveAttribute('step', '100')
   await expect(page.locator('#machine-delay-control')).toHaveAttribute('min', '0')
   await expect(page.locator('#machine-delay-control')).toHaveAttribute('max', '5000')
   await expect(page.locator('#machine-delay-control')).toHaveAttribute('step', '100')
+  await expect(page.locator('#animation-delay-value')).toHaveText('300')
+  await expect(page.locator('#machine-delay-value')).toHaveText('100')
 
   await page.click('#btn-close-settings')
   await expect(page.locator('#settings-panel')).toHaveClass(/d-none/)
   await expect(page.locator('#btn-open-settings')).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('Timing sliders synchronize across clients and reconnect restores values', async ({ browser }) => {
+  const { contextOne, contextTwo, pageOne, pageTwo } = await setupTwoPlayers(browser)
+
+  await expect(pageOne.locator('#turn-indicator')).toContainText('Turno de')
+  await expect(pageTwo.locator('#turn-indicator')).toContainText('Turno de')
+
+  await pageOne.click('#btn-open-settings')
+  await pageTwo.click('#btn-open-settings')
+
+  await pageOne.locator('#animation-delay-control').evaluate((element) => {
+    element.value = '700'
+    element.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+
+  await pageOne.locator('#machine-delay-control').evaluate((element) => {
+    element.value = '900'
+    element.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+
+  await expect(pageOne.locator('#animation-delay-control')).toHaveValue('700')
+  await expect(pageOne.locator('#machine-delay-control')).toHaveValue('900')
+
+  const gameId = (await pageOne.locator('#game-id-value').textContent()).trim()
+  await contextTwo.close()
+
+  const reconnectContext = await browser.newContext()
+  const reconnectPage = await reconnectContext.newPage()
+  await reconnectPage.goto('/')
+  await reconnectPage.fill('#join-game-id', gameId)
+  await reconnectPage.click('#btn-join-game')
+  await reconnectPage.click('#btn-open-settings')
+
+  await expect(reconnectPage.locator('#animation-delay-control')).toHaveValue('700')
+  await expect(reconnectPage.locator('#machine-delay-control')).toHaveValue('900')
+  await expect(reconnectPage.locator('#animation-delay-value')).toHaveText('700')
+  await expect(reconnectPage.locator('#machine-delay-value')).toHaveText('900')
+
+  await reconnectContext.close()
+  await contextOne.close()
 })
 
 test('Multi-step cascade explosions produce animation sequence', async ({ browser }) => {
