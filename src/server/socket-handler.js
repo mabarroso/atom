@@ -20,27 +20,156 @@ function safeHandler (socket, handler) {
   }
 }
 
-function getExplosionCompletionDelayMs (animationSequence, animationDelayMs) {
-  if (!Array.isArray(animationSequence) || animationSequence.length === 0) {
-    return 0
-  }
-
-  const maxStepDelay = animationSequence.reduce((maxDelay, step) => {
-    const currentDelay = Number(step?.delay)
-    if (!Number.isFinite(currentDelay) || currentDelay < 0) {
-      return maxDelay
-    }
-
-    return Math.max(maxDelay, currentDelay)
-  }, 0)
-
-  const perStepDelay = Number(animationDelayMs)
-  const safePerStepDelay = Number.isFinite(perStepDelay) ? Math.max(0, perStepDelay) : 0
-  return maxStepDelay + safePerStepDelay
-}
-
 function registerSocketHandlers (io) {
   const socketToPlayer = new Map()
+  const pendingTurnTimers = new Map()
+
+  function clearPendingTurnTimer (gameId) {
+    const timer = pendingTurnTimers.get(gameId)
+    if (timer) {
+      clearTimeout(timer)
+      pendingTurnTimers.delete(gameId)
+    }
+  }
+
+  function emitStateUpdate (gameId, state, extra = {}) {
+    io.to(state.roomId).emit('server:game:stateUpdate', {
+      gameId,
+      machineMode: state.machineMode,
+      state,
+      ...extra
+    })
+  }
+
+  function emitTurnChanged (gameId, state) {
+    io.to(state.roomId).emit('server:game:turnChanged', {
+      gameId,
+      currentPlayer: state.currentPlayer
+    })
+  }
+
+  function emitEnded (gameId, state) {
+    io.to(state.roomId).emit('server:game:ended', {
+      gameId,
+      winner: state.winner,
+      reason: state.winReason,
+      state
+    })
+  }
+
+  function scheduleMachineMove (gameId, priorCascadeDelayMs = 0) {
+    const game = getGame(gameId)
+    if (!game || game.state !== 'ACTIVE' || game.machineMode !== true || game.currentPlayer !== 2) {
+      return
+    }
+
+    const plannedMove = getMachinePlannedMove(gameId)
+    if (!plannedMove) {
+      const winner = game.checkWinner() || 1
+      game.end(winner, 'noMoves')
+      const endedState = game.toJSON()
+      clearPendingTurnTimer(gameId)
+      emitStateUpdate(gameId, endedState)
+      emitEnded(gameId, endedState)
+      return
+    }
+
+    const machineDelayMs = Number.isFinite(game.machineResponseDelayMs)
+      ? Math.max(0, Number(game.machineResponseDelayMs))
+      : 0
+    const cascadeDelayMs = Number.isFinite(Number(priorCascadeDelayMs))
+      ? Math.max(0, Number(priorCascadeDelayMs))
+      : 0
+    const effectiveMachineDelayMs = Math.max(0, machineDelayMs - cascadeDelayMs)
+
+    setTimeout(() => {
+      const freshGame = getGame(gameId)
+      if (!freshGame || freshGame.state !== 'ACTIVE' || freshGame.currentPlayer !== 2) {
+        return
+      }
+
+      if (typeof freshGame.isActionLocked === 'function' && freshGame.isActionLocked()) {
+        return
+      }
+
+      const machineResult = processMove(gameId, 2, plannedMove.row, plannedMove.col)
+      if (!machineResult.ok) {
+        io.to(freshGame.roomId).emit('error:internal', { message: 'Error interno del servidor' })
+        return
+      }
+
+      emitStateUpdate(gameId, machineResult.state, {
+        moveOrigin: { row: plannedMove.row, col: plannedMove.col },
+        animationSequence: machineResult.animationSequence,
+        truncated: machineResult.truncated
+      })
+
+      const machineAtoms = machineResult.state?.board?.cells?.[plannedMove.row]?.[plannedMove.col]?.atoms ?? null
+      io.to(machineResult.state.roomId).emit('server:game:machineMove', {
+        gameId,
+        row: plannedMove.row,
+        col: plannedMove.col,
+        atoms: machineAtoms
+      })
+
+      if (machineResult.winner) {
+        clearPendingTurnTimer(gameId)
+        emitEnded(gameId, machineResult.state)
+        return
+      }
+
+      if (machineResult.pendingTurn) {
+        scheduleTurnHandoff(gameId, machineResult.pendingTurn)
+        return
+      }
+
+      emitTurnChanged(gameId, machineResult.state)
+    }, effectiveMachineDelayMs)
+  }
+
+  function scheduleTurnHandoff (gameId, pendingTurn) {
+    clearPendingTurnTimer(gameId)
+
+    const requestedDelayMs = Number(pendingTurn?.delayMs)
+    const initialDelayMs = Number.isFinite(requestedDelayMs) ? Math.max(0, requestedDelayMs) : 0
+
+    const timer = setTimeout(() => {
+      const game = getGame(gameId)
+      if (!game || game.state !== 'ACTIVE') {
+        pendingTurnTimers.delete(gameId)
+        return
+      }
+
+      if (Number.isInteger(pendingTurn?.fromPlayer) && game.currentPlayer !== pendingTurn.fromPlayer) {
+        pendingTurnTimers.delete(gameId)
+        return
+      }
+
+      const remainingMs = typeof game.getActionLockRemainingMs === 'function'
+        ? game.getActionLockRemainingMs()
+        : 0
+      if (remainingMs > 0) {
+        scheduleTurnHandoff(gameId, { ...pendingTurn, delayMs: remainingMs })
+        return
+      }
+
+      game.switchTurn()
+      const switchedState = game.toJSON()
+      pendingTurnTimers.delete(gameId)
+
+      emitStateUpdate(gameId, switchedState)
+      emitTurnChanged(gameId, switchedState)
+
+      if (switchedState.machineMode === true && switchedState.currentPlayer === 2) {
+        const cascadeDelayMs = Number.isFinite(Number(pendingTurn?.cascadeDelayMs))
+          ? Math.max(0, Number(pendingTurn.cascadeDelayMs))
+          : 0
+        scheduleMachineMove(gameId, cascadeDelayMs)
+      }
+    }, initialDelayMs)
+
+    pendingTurnTimers.set(gameId, timer)
+  }
 
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`)
@@ -155,107 +284,27 @@ function registerSocketHandlers (io) {
         return
       }
 
-      io.to(result.state.roomId).emit('server:game:stateUpdate', {
-        gameId: assignment.gameId,
-        machineMode: result.state.machineMode,
-        state: result.state,
+      emitStateUpdate(assignment.gameId, result.state, {
         moveOrigin: { row: Number(row), col: Number(col) },
         animationSequence: result.animationSequence,
         truncated: result.truncated
       })
 
-      io.to(result.state.roomId).emit('server:game:turnChanged', {
-        gameId: assignment.gameId,
-        currentPlayer: result.state.currentPlayer
-      })
-
       if (result.winner) {
-        io.to(result.state.roomId).emit('server:game:ended', {
-          gameId: assignment.gameId,
-          winner: result.state.winner,
-          reason: result.state.winReason,
-          state: result.state
-        })
+        clearPendingTurnTimer(assignment.gameId)
+        emitEnded(assignment.gameId, result.state)
         return
       }
 
+      if (result.pendingTurn) {
+        scheduleTurnHandoff(assignment.gameId, result.pendingTurn)
+        return
+      }
+
+      emitTurnChanged(assignment.gameId, result.state)
+
       if (result.state.machineMode === true && result.state.currentPlayer === 2) {
-        const plannedMove = getMachinePlannedMove(assignment.gameId)
-        if (!plannedMove) {
-          const game = getGame(assignment.gameId)
-          if (game && game.state === 'ACTIVE') {
-            const winner = game.checkWinner() || 1
-            game.end(winner, 'noMoves')
-            const endedState = game.toJSON()
-
-            io.to(endedState.roomId).emit('server:game:stateUpdate', {
-              gameId: assignment.gameId,
-              machineMode: endedState.machineMode,
-              state: endedState
-            })
-
-            io.to(endedState.roomId).emit('server:game:ended', {
-              gameId: assignment.gameId,
-              winner: endedState.winner,
-              reason: endedState.winReason,
-              state: endedState
-            })
-          }
-          return
-        }
-
-        const machineDelayMs = Number.isFinite(result.state.machineResponseDelayMs)
-          ? Math.max(0, Number(result.state.machineResponseDelayMs))
-          : 0
-        const explosionCompletionDelayMs = getExplosionCompletionDelayMs(
-          result.animationSequence,
-          result.state.animationDelayMs
-        )
-        const effectiveMachineDelayMs = Math.max(machineDelayMs, explosionCompletionDelayMs)
-
-        setTimeout(() => {
-          const game = getGame(assignment.gameId)
-          if (!game || game.state !== 'ACTIVE' || game.currentPlayer !== 2) {
-            return
-          }
-
-          const machineResult = processMove(assignment.gameId, 2, plannedMove.row, plannedMove.col)
-          if (!machineResult.ok) {
-            io.to(game.roomId).emit('error:internal', { message: 'Error interno del servidor' })
-            return
-          }
-
-          io.to(machineResult.state.roomId).emit('server:game:stateUpdate', {
-            gameId: assignment.gameId,
-            machineMode: machineResult.state.machineMode,
-            state: machineResult.state,
-            moveOrigin: { row: plannedMove.row, col: plannedMove.col },
-            animationSequence: machineResult.animationSequence,
-            truncated: machineResult.truncated
-          })
-
-          const machineAtoms = machineResult.state?.board?.cells?.[plannedMove.row]?.[plannedMove.col]?.atoms ?? null
-          io.to(machineResult.state.roomId).emit('server:game:machineMove', {
-            gameId: assignment.gameId,
-            row: plannedMove.row,
-            col: plannedMove.col,
-            atoms: machineAtoms
-          })
-
-          io.to(machineResult.state.roomId).emit('server:game:turnChanged', {
-            gameId: assignment.gameId,
-            currentPlayer: machineResult.state.currentPlayer
-          })
-
-          if (machineResult.winner) {
-            io.to(machineResult.state.roomId).emit('server:game:ended', {
-              gameId: assignment.gameId,
-              winner: machineResult.state.winner,
-              reason: machineResult.state.winReason,
-              state: machineResult.state
-            })
-          }
-        }, effectiveMachineDelayMs)
+        scheduleMachineMove(assignment.gameId)
       }
     }))
 
@@ -283,11 +332,7 @@ function registerSocketHandlers (io) {
       })
 
       const state = game.toJSON()
-      io.to(state.roomId).emit('server:game:stateUpdate', {
-        gameId: assignment.gameId,
-        machineMode: state.machineMode,
-        state
-      })
+      emitStateUpdate(assignment.gameId, state)
     }))
 
     socket.on('client:game:revealAtomCounters', safeHandler(socket, () => {
@@ -316,11 +361,7 @@ function registerSocketHandlers (io) {
       game.revealAtomCounters()
       const state = game.toJSON()
 
-      io.to(state.roomId).emit('server:game:stateUpdate', {
-        gameId: assignment.gameId,
-        machineMode: state.machineMode,
-        state
-      })
+      emitStateUpdate(assignment.gameId, state)
     }))
 
     socket.on('disconnect', (reason) => {
@@ -330,33 +371,18 @@ function registerSocketHandlers (io) {
       const assignment = socketToPlayer.get(socket.id)
       if (assignment) {
         const state = handleDisconnect(assignment.gameId, assignment.player, (forfeitState) => {
-          io.to(forfeitState.roomId).emit('server:game:stateUpdate', {
-            gameId: assignment.gameId,
-            state: forfeitState
-          })
-
-          io.to(forfeitState.roomId).emit('server:game:ended', {
-            gameId: assignment.gameId,
-            winner: forfeitState.winner,
-            reason: forfeitState.winReason,
-            state: forfeitState
-          })
+          clearPendingTurnTimer(assignment.gameId)
+          emitStateUpdate(assignment.gameId, forfeitState)
+          emitEnded(assignment.gameId, forfeitState)
         })
         socketToPlayer.delete(socket.id)
 
         if (state) {
-          io.to(state.roomId).emit('server:game:stateUpdate', {
-            gameId: assignment.gameId,
-            state
-          })
+          emitStateUpdate(assignment.gameId, state)
 
           if (state.state === 'ENDED') {
-            io.to(state.roomId).emit('server:game:ended', {
-              gameId: assignment.gameId,
-              winner: state.winner,
-              reason: state.winReason,
-              state
-            })
+            clearPendingTurnTimer(assignment.gameId)
+            emitEnded(assignment.gameId, state)
           }
         }
       }

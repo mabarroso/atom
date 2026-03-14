@@ -49,6 +49,21 @@ describe('game-engine', () => {
     }
   })
 
+  test('defers turn handoff while explosion cascade completion is pending', () => {
+    const game = createGame(null, 6)
+
+    game.board.placeAtom(1, 1, 1)
+    game.board.placeAtom(1, 1, 1)
+    game.board.placeAtom(1, 1, 1)
+
+    const result = processMove(game.gameId, 1, 1, 1)
+
+    expect(result.ok).toBe(true)
+    expect(result.pendingTurn).toBeDefined()
+    expect(result.state.currentPlayer).toBe(1)
+    expect(result.state.actionLockedUntil).toBeGreaterThan(Date.now())
+  })
+
   test('keeps roundNumber after player 1 valid move and increments after player 2 valid move', () => {
     const game = createGame(null, 6)
 

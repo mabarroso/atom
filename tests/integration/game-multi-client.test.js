@@ -422,6 +422,54 @@ describeMultiClient('Machine mode integration scenarios', () => {
     expect(elapsedMs).toBeGreaterThanOrEqual(expectedDelayMs - 40)
   }, 15000)
 
+  test('machine scheduling delay uses max(cascade completion, machine delay)', async () => {
+    client1.socket.emit('client:game:start', { boardSize: 6, machineMode: true })
+    const started = await client1.waitForEvent('game:started')
+    const game = getGame(started.data.gameId)
+
+    client1.updateTiming({
+      animationDelayMs: 1000,
+      machineResponseDelayMs: 1000
+    })
+
+    await client1.waitForState((state) => {
+      return state.animationDelayMs === 1000 && state.machineResponseDelayMs === 1000
+    }, 3000)
+
+    client1.events = []
+    game.board.cells[1][1] = { player: 1, atoms: 9 }
+    game.currentPlayer = 1
+
+    const startTime = Date.now()
+    const machineMovePromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Timeout waiting machine move for max-delay check')), 12000)
+      client1.socket.once('server:game:machineMove', (payload) => {
+        clearTimeout(timeout)
+        resolve(payload)
+      })
+    })
+
+    client1.makeMove(0, 0)
+    const cascadeUpdate = await client1.waitForEvent('game:stateUpdate', 3000)
+    const sequence = cascadeUpdate.data.animationSequence || []
+    const cascadeCompletionDelayMs = sequence.reduce((maxDelay, step) => {
+      const currentDelay = Number(step?.delay)
+      if (!Number.isFinite(currentDelay) || currentDelay < 0) {
+        return maxDelay
+      }
+
+      return Math.max(maxDelay, currentDelay)
+    }, 0) + 1000
+
+    await machineMovePromise
+
+    const elapsedMs = Date.now() - startTime
+    const expectedDelayMs = Math.max(cascadeCompletionDelayMs, 1000)
+
+    expect(elapsedMs).toBeGreaterThanOrEqual(expectedDelayMs - 100)
+    expect(elapsedMs).toBeLessThan(expectedDelayMs + 700)
+  }, 18000)
+
   test('clamps animation timing updates to 24000 ms max with 100 ms step', async () => {
     client1.socket.emit('client:game:start', { boardSize: 6, machineMode: true })
     await client1.waitForEvent('game:started')
@@ -537,4 +585,89 @@ describeMultiClient('Machine mode integration scenarios', () => {
 
     removeGame(gameId)
   })
+})
+
+describeMultiClient('Turn lock integration scenarios', () => {
+  let httpServer
+  let client1
+  let client2
+
+  beforeAll(async () => {
+    const { createServer } = require('../../src/server/index')
+    const serverInstance = createServer(3001)
+    httpServer = serverInstance.httpServer
+
+    await new Promise((resolve) => {
+      httpServer.listen(3001, resolve)
+    })
+  }, 15000)
+
+  beforeEach(async () => {
+    client1 = new GameClient('http://localhost:3001', 'turn-lock-host')
+    client2 = new GameClient('http://localhost:3001', 'turn-lock-joiner')
+
+    await client1.connect()
+    await client2.connect()
+
+    client1.startGame(6)
+    const startEvent1 = await client1.waitForEvent('game:started')
+    const gameId = startEvent1.data.gameId
+
+    client2.socket.emit('client:game:start', { boardSize: 6, gameId })
+    await client1.waitForEvent('game:started')
+    await client2.waitForEvent('game:started')
+  }, 15000)
+
+  afterEach(async () => {
+    if (client1) {
+      client1.disconnect()
+    }
+    if (client2) {
+      client2.disconnect()
+    }
+    await new Promise(resolve => setTimeout(resolve, 100))
+  })
+
+  afterAll(async () => {
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    if (httpServer) {
+      await new Promise((resolve) => {
+        httpServer.close(resolve)
+      })
+    }
+  }, 15000)
+
+  test('blocks next-player move during pending explosion window and releases turn after completion', async () => {
+    const gameId = client1.getState().gameId
+    const game = getGame(gameId)
+
+    client1.updateTiming({ animationDelayMs: 800 })
+    await client1.waitForState((state) => state.animationDelayMs === 800, 3000)
+    await client2.waitForState((state) => state.animationDelayMs === 800, 3000)
+
+    game.board.placeAtom(1, 1, 1)
+    game.board.placeAtom(1, 1, 1)
+    game.board.placeAtom(1, 1, 1)
+    game.currentPlayer = 1
+
+    client1.events = []
+    client2.events = []
+
+    client1.makeMove(1, 1)
+    await client1.waitForEvent('game:stateUpdate', 3000)
+    await client2.waitForEvent('game:stateUpdate', 3000)
+
+    expect(client1.getCurrentPlayer()).toBe(1)
+    expect(client2.getCurrentPlayer()).toBe(1)
+
+    const beforeAtoms = client2.getAtomCount(0, 0)
+    client2.makeMove(0, 0)
+    const blocked = await client2.waitForEvent('error:notYourTurn', 3000)
+    expect(blocked.data.message).toMatch(/No es tu turno|Espera a que terminen las explosiones/)
+    expect(client2.getAtomCount(0, 0)).toBe(beforeAtoms)
+
+    await client1.waitForState((state) => state.currentPlayer === 2, 4000)
+    await client2.waitForState((state) => state.currentPlayer === 2, 4000)
+  }, 20000)
 })

@@ -22,4 +22,16 @@ describe('player-actions', () => {
     expect(game.board.getAtomCount(0, 0)).toBe(1)
     expect(game.board.getOwner(0, 0)).toBe(1)
   })
+
+  test('blocks moves while action lock is active', () => {
+    const game = new GameState()
+    game.start()
+    game.setActionLockFor(200)
+
+    const result = validateMove(game, 1, 0, 0)
+
+    expect(result.valid).toBe(false)
+    expect(result.error.code).toBe('error:game:notYourTurn')
+    expect(result.error.message).toBe('Espera a que terminen las explosiones')
+  })
 })

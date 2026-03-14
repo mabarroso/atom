@@ -3,6 +3,7 @@ const { GAME_STATES } = require('./game-state')
 const ERROR_MESSAGES = {
   invalidMove: 'Movimiento inválido: no puedes jugar en esta celda',
   notYourTurn: 'No es tu turno',
+  waitExplosions: 'Espera a que terminen las explosiones',
   notActive: 'La partida no está activa',
   invalidCell: 'Celda inválida'
 }
@@ -29,6 +30,10 @@ function validateMove (gameState, player, row, col) {
 
   if (gameState.currentPlayer !== player) {
     return { valid: false, error: createError('error:game:notYourTurn', ERROR_MESSAGES.notYourTurn) }
+  }
+
+  if (typeof gameState.isActionLocked === 'function' && gameState.isActionLocked()) {
+    return { valid: false, error: createError('error:game:notYourTurn', ERROR_MESSAGES.waitExplosions) }
   }
 
   if (!gameState.board.isValidPosition(row, col)) {

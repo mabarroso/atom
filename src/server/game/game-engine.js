@@ -11,6 +11,25 @@ const {
 const games = new Map()
 const forfeitTimers = new Map()
 
+function getExplosionCompletionDelayMs (animationSequence, animationDelayMs) {
+  if (!Array.isArray(animationSequence) || animationSequence.length === 0) {
+    return 0
+  }
+
+  const maxStepDelay = animationSequence.reduce((maxDelay, step) => {
+    const currentDelay = Number(step?.delay)
+    if (!Number.isFinite(currentDelay) || currentDelay < 0) {
+      return maxDelay
+    }
+
+    return Math.max(maxDelay, currentDelay)
+  }, 0)
+
+  const perStepDelay = Number(animationDelayMs)
+  const safePerStepDelay = Number.isFinite(perStepDelay) ? Math.max(0, perStepDelay) : 0
+  return maxStepDelay + safePerStepDelay
+}
+
 /**
  * Create and start a game instance.
  * @param {string|null} roomId
@@ -66,7 +85,7 @@ function removeGame (gameId) {
  * @param {number} player
  * @param {number} row
  * @param {number} col
- * @returns {{ok:boolean,error?:{code:string,message:string},state?:object,winner?:number|null,animationSequence?:Array<object>,truncated?:boolean}}
+ * @returns {{ok:boolean,error?:{code:string,message:string},state?:object,winner?:number|null,animationSequence?:Array<object>,truncated?:boolean,pendingTurn?:{fromPlayer:number,toPlayer:number,delayMs:number,cascadeDelayMs:number}}}
  */
 function processMove (gameId, player, row, col) {
   const game = getGame(gameId)
@@ -89,6 +108,7 @@ function processMove (gameId, player, row, col) {
   }
 
   const cascadeResult = resolveCascade(game.board, player, undefined, game.animationDelayMs)
+  const cascadeCompletionDelayMs = getExplosionCompletionDelayMs(cascadeResult.animationSequence, game.animationDelayMs)
   game.appendMove({
     player,
     row,
@@ -97,10 +117,21 @@ function processMove (gameId, player, row, col) {
   })
 
   const winner = game.checkWinner()
+  let pendingTurn = null
   if (winner) {
     game.end(winner, 'win')
   } else if (game.state === GAME_STATES.ACTIVE) {
-    game.switchTurn()
+    if (cascadeCompletionDelayMs > 0) {
+      pendingTurn = {
+        fromPlayer: game.currentPlayer,
+        toPlayer: game.currentPlayer === 1 ? 2 : 1,
+        delayMs: cascadeCompletionDelayMs,
+        cascadeDelayMs: cascadeCompletionDelayMs
+      }
+      game.setActionLockFor(cascadeCompletionDelayMs)
+    } else {
+      game.switchTurn()
+    }
   }
 
   return {
@@ -108,7 +139,8 @@ function processMove (gameId, player, row, col) {
     state: game.toJSON(),
     winner,
     animationSequence: cascadeResult.animationSequence,
-    truncated: cascadeResult.truncated
+    truncated: cascadeResult.truncated,
+    pendingTurn
   }
 }
 
@@ -184,5 +216,6 @@ module.exports = {
   cleanupIdleGames,
   recoverConnection,
   handleDisconnect,
+  getExplosionCompletionDelayMs,
   games
 }

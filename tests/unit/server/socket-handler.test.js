@@ -1,5 +1,5 @@
 const { registerSocketHandlers } = require('../../../src/server/socket-handler')
-const { games, removeGame } = require('../../../src/server/game/game-engine')
+const { games, removeGame, getGame } = require('../../../src/server/game/game-engine')
 
 describe('socket handlers', () => {
   afterEach(() => {
@@ -159,5 +159,69 @@ describe('socket handlers', () => {
     expect(stateUpdateCall).toBeDefined()
     expect(stateUpdateCall[1].state.animationDelayMs).toBe(200)
     expect(stateUpdateCall[1].state.machineResponseDelayMs).toBe(0)
+  })
+
+  it('delays turnChanged until cascade completion window finishes', () => {
+    jest.useFakeTimers()
+
+    const callbacks = {}
+    const roomEmit = jest.fn()
+    const io = {
+      on: jest.fn((event, callback) => {
+        callbacks[event] = callback
+      }),
+      emit: jest.fn(),
+      to: jest.fn(() => ({ emit: roomEmit })),
+      engine: { clientsCount: 2 }
+    }
+
+    const socketOneEvents = {}
+    const socketTwoEvents = {}
+    const socketOne = {
+      id: 'socket-1',
+      on: jest.fn((event, callback) => {
+        socketOneEvents[event] = callback
+      }),
+      emit: jest.fn(),
+      join: jest.fn()
+    }
+    const socketTwo = {
+      id: 'socket-2',
+      on: jest.fn((event, callback) => {
+        socketTwoEvents[event] = callback
+      }),
+      emit: jest.fn(),
+      join: jest.fn()
+    }
+
+    registerSocketHandlers(io)
+    callbacks.connection(socketOne)
+    callbacks.connection(socketTwo)
+
+    socketOneEvents['client:game:start']({ boardSize: 6 })
+
+    const startCall = roomEmit.mock.calls.find(([eventName]) => eventName === 'server:game:started')
+    const gameId = startCall?.[1]?.gameId
+
+    socketTwoEvents['client:game:start']({ boardSize: 6, gameId })
+
+    const game = getGame(gameId)
+    game.board.placeAtom(1, 1, 1)
+    game.board.placeAtom(1, 1, 1)
+    game.board.placeAtom(1, 1, 1)
+
+    roomEmit.mockClear()
+    socketOneEvents['client:game:move']({ row: 1, col: 1 })
+
+    const immediateTurnEvents = roomEmit.mock.calls.filter(([eventName]) => eventName === 'server:game:turnChanged')
+    expect(immediateTurnEvents).toHaveLength(0)
+
+    jest.runOnlyPendingTimers()
+
+    const delayedTurnEvents = roomEmit.mock.calls.filter(([eventName]) => eventName === 'server:game:turnChanged')
+    expect(delayedTurnEvents.length).toBeGreaterThan(0)
+    expect(delayedTurnEvents[0][1].currentPlayer).toBe(2)
+
+    jest.useRealTimers()
   })
 })

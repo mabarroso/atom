@@ -57,6 +57,7 @@ class GameState {
     this.turn = 1
     this.animationDelayMs = DEFAULT_ANIMATION_DELAY
     this.machineResponseDelayMs = DEFAULT_MACHINE_RESPONSE_DELAY_MS
+    this.actionLockedUntil = 0
     this.atomCountersVisible = false
     this.moveHistory = []
     this.lastActivityAt = Date.now()
@@ -90,6 +91,7 @@ class GameState {
     this.turn = 1
     this.animationDelayMs = DEFAULT_ANIMATION_DELAY
     this.machineResponseDelayMs = DEFAULT_MACHINE_RESPONSE_DELAY_MS
+    this.actionLockedUntil = 0
     this.atomCountersVisible = false
     this.lastActivityAt = Date.now()
   }
@@ -103,10 +105,12 @@ class GameState {
     this.state = GAME_STATES.ENDED
     this.winner = winner
     this.winReason = reason
+    this.actionLockedUntil = 0
     this.lastActivityAt = Date.now()
   }
 
   switchTurn () {
+    this.actionLockedUntil = 0
     this.currentPlayer = this.currentPlayer === 1 ? 2 : 1
     this.turn += 1
     if (this.currentPlayer === 1) {
@@ -114,6 +118,31 @@ class GameState {
     }
     this.lastActivityAt = Date.now()
     return this.currentPlayer
+  }
+
+  setActionLockFor (durationMs) {
+    const numericDuration = Number(durationMs)
+    if (!Number.isFinite(numericDuration) || numericDuration <= 0) {
+      return 0
+    }
+
+    const lockTarget = Date.now() + numericDuration
+    this.actionLockedUntil = Math.max(this.actionLockedUntil, lockTarget)
+    this.lastActivityAt = Date.now()
+    return this.actionLockedUntil
+  }
+
+  clearActionLock () {
+    this.actionLockedUntil = 0
+    this.lastActivityAt = Date.now()
+  }
+
+  isActionLocked (now = Date.now()) {
+    return this.actionLockedUntil > now
+  }
+
+  getActionLockRemainingMs (now = Date.now()) {
+    return Math.max(0, this.actionLockedUntil - now)
   }
 
   setPlayerConnected (playerId, connected, socketId = null) {
@@ -250,6 +279,7 @@ class GameState {
       roundNumber: this.roundNumber,
       animationDelayMs: this.animationDelayMs,
       machineResponseDelayMs: this.machineResponseDelayMs,
+      actionLockedUntil: this.actionLockedUntil,
       atomCountersVisible: this.atomCountersVisible,
       atomCounters: this.getAtomCounters(),
       players: this.players,

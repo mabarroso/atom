@@ -103,6 +103,57 @@ test('Invalid move on opponent cell is rejected', async ({ browser }) => {
   await contextTwo.close()
 })
 
+test('Other player cannot move until explosion sequence completes', async ({ browser, browserName }) => {
+  test.fixme(browserName === 'chromium', 'Flaky two-context turn sync timing in chromium; covered by integration test and non-chromium e2e')
+  const { contextOne, contextTwo, pageOne, pageTwo } = await setupTwoPlayers(browser)
+
+  await playSequencedMove(pageOne, pageTwo, { player: 1, row: 0, col: 0 })
+  await playSequencedMove(pageOne, pageTwo, { player: 2, row: 1, col: 1 })
+
+  await pageOne.click('#btn-open-settings')
+  await pageOne.locator('#animation-delay-control').evaluate((element) => {
+    element.value = '800'
+    element.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  await expect(pageOne.locator('#animation-delay-control')).toHaveValue('800')
+
+  let exploded = false
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    await pageOne.click('#game-board .game-cell[data-row="0"][data-col="0"]')
+    await pageOne.waitForTimeout(180)
+
+    const cornerAtoms = await pageOne.locator('#game-board .game-cell[data-row="0"][data-col="0"] .atom-dot').count()
+    if (cornerAtoms === 0) {
+      exploded = true
+      break
+    }
+
+    await pageOne.waitForTimeout(220)
+  }
+
+  expect(exploded).toBe(true)
+
+  await expect(pageTwo.locator('#turn-indicator')).toContainText('Jugador 1')
+
+  const targetCell = pageTwo.locator('#game-board .game-cell[data-row="2"][data-col="2"]')
+  const beforeCount = await targetCell.locator('.atom-dot').count()
+
+  await targetCell.click()
+  await pageTwo.waitForTimeout(150)
+
+  await expect(targetCell.locator('.atom-dot')).toHaveCount(beforeCount)
+
+  await expect.poll(async () => {
+    return (await pageTwo.locator('#turn-indicator').textContent()) || ''
+  }, { timeout: 5000 }).toContain('Jugador 2')
+
+  await targetCell.click()
+  await expect(targetCell.locator('.atom-dot')).toHaveCount(beforeCount + 1)
+
+  await contextOne.close()
+  await contextTwo.close()
+})
+
 test('Deterministic atom layout classes are applied for 1, 2 and 3 atoms', async ({ browser }) => {
   const { contextOne, contextTwo, pageOne, pageTwo } = await setupTwoPlayers(browser)
 
