@@ -198,7 +198,7 @@ The system SHALL provide controls for starting, restarting, managing games, reve
 - **WHEN** timing settings are available for the current match and settings panel is open
 - **THEN** the UI SHALL show one horizontal slider for animation speed and one horizontal slider for machine response time inside the panel
 - **AND** labels SHALL remain in Spanish as "Velocidad animación (ms)" and "Respuesta máquina (ms)"
-- **AND** each control SHALL display the current authoritative value
+- **AND** each slider SHALL display the current authoritative value
 
 #### Scenario: Animation speed slider supports full configured range
 - **WHEN** animation speed is edited from settings panel
