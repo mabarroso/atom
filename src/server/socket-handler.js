@@ -20,6 +20,25 @@ function safeHandler (socket, handler) {
   }
 }
 
+function getExplosionCompletionDelayMs (animationSequence, animationDelayMs) {
+  if (!Array.isArray(animationSequence) || animationSequence.length === 0) {
+    return 0
+  }
+
+  const maxStepDelay = animationSequence.reduce((maxDelay, step) => {
+    const currentDelay = Number(step?.delay)
+    if (!Number.isFinite(currentDelay) || currentDelay < 0) {
+      return maxDelay
+    }
+
+    return Math.max(maxDelay, currentDelay)
+  }, 0)
+
+  const perStepDelay = Number(animationDelayMs)
+  const safePerStepDelay = Number.isFinite(perStepDelay) ? Math.max(0, perStepDelay) : 0
+  return maxStepDelay + safePerStepDelay
+}
+
 function registerSocketHandlers (io) {
   const socketToPlayer = new Map()
 
@@ -188,20 +207,17 @@ function registerSocketHandlers (io) {
         const machineDelayMs = Number.isFinite(result.state.machineResponseDelayMs)
           ? Math.max(0, Number(result.state.machineResponseDelayMs))
           : 0
+        const explosionCompletionDelayMs = getExplosionCompletionDelayMs(
+          result.animationSequence,
+          result.state.animationDelayMs
+        )
+        const effectiveMachineDelayMs = Math.max(machineDelayMs, explosionCompletionDelayMs)
 
         setTimeout(() => {
           const game = getGame(assignment.gameId)
           if (!game || game.state !== 'ACTIVE' || game.currentPlayer !== 2) {
             return
           }
-
-          const previewAtoms = game.board.getAtomCount(plannedMove.row, plannedMove.col) + 1
-          io.to(game.roomId).emit('server:game:machineMove', {
-            gameId: assignment.gameId,
-            row: plannedMove.row,
-            col: plannedMove.col,
-            atoms: previewAtoms
-          })
 
           const machineResult = processMove(assignment.gameId, 2, plannedMove.row, plannedMove.col)
           if (!machineResult.ok) {
@@ -218,6 +234,14 @@ function registerSocketHandlers (io) {
             truncated: machineResult.truncated
           })
 
+          const machineAtoms = machineResult.state?.board?.cells?.[plannedMove.row]?.[plannedMove.col]?.atoms ?? null
+          io.to(machineResult.state.roomId).emit('server:game:machineMove', {
+            gameId: assignment.gameId,
+            row: plannedMove.row,
+            col: plannedMove.col,
+            atoms: machineAtoms
+          })
+
           io.to(machineResult.state.roomId).emit('server:game:turnChanged', {
             gameId: assignment.gameId,
             currentPlayer: machineResult.state.currentPlayer
@@ -231,7 +255,7 @@ function registerSocketHandlers (io) {
               state: machineResult.state
             })
           }
-        }, machineDelayMs)
+        }, effectiveMachineDelayMs)
       }
     }))
 

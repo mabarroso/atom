@@ -303,4 +303,50 @@ describe('game-ui', () => {
     expect(cellStepTwo.classList.contains('player-1')).toBe(true)
     expect(cellStepTwo.getAttribute('aria-label')).toContain('5 átomos, Jugador 1')
   })
+
+  test('redraws impacted cell from authoritative state on machineMove event', () => {
+    const { documentMock, elements } = buildRequiredDom()
+    const socket = createSocketMock()
+
+    global.document = documentMock
+    global.window = {
+      setTimeout,
+      confirm: jest.fn(() => true),
+      matchMedia: jest.fn(() => ({ matches: false }))
+    }
+
+    initGameUI(socket)
+
+    const initialBoard = createBoard(4)
+    const machineBoard = createBoard(4)
+    machineBoard.cells[0][1] = { player: 2, atoms: 1 }
+
+    socket.trigger('server:game:started', {
+      gameId: 'game-2',
+      machineMode: true,
+      state: createState(initialBoard)
+    })
+
+    socket.trigger('server:game:stateUpdate', {
+      state: createState(machineBoard),
+      moveOrigin: { row: 0, col: 1 },
+      animationSequence: []
+    })
+
+    const boardContainer = elements.get('game-board')
+    const cellBeforeMachineMove = boardContainer.querySelector('.game-cell[data-row="0"][data-col="1"]')
+    expect(cellBeforeMachineMove.classList.contains('player-2')).toBe(true)
+    expect(cellBeforeMachineMove.getAttribute('aria-label')).toContain('1 átomo, Jugador 2')
+
+    socket.trigger('server:game:machineMove', {
+      row: 0,
+      col: 1
+    })
+
+    const cellAfterMachineMove = boardContainer.querySelector('.game-cell[data-row="0"][data-col="1"]')
+    expect(cellAfterMachineMove).not.toBe(cellBeforeMachineMove)
+    expect(cellAfterMachineMove.classList.contains('player-2')).toBe(true)
+    expect(cellAfterMachineMove.getAttribute('aria-label')).toContain('1 átomo, Jugador 2')
+    expect(cellAfterMachineMove.classList.contains('is-last-move')).toBe(true)
+  })
 })

@@ -30,7 +30,9 @@ test.describe('Machine mode browser flow', () => {
     await expect(page.locator('#round-number-indicator')).toContainText('Ronda #1')
 
     await page.click('#game-board .game-cell[data-row="0"][data-col="0"]')
-    await expect(page.locator('#game-board .game-cell[data-row="0"][data-col="0"]')).toHaveClass(/is-last-move/)
+    await expect.poll(async () => {
+      return page.locator('#game-board .game-cell[data-row="0"][data-col="0"] .atom-dot').count()
+    }, { timeout: 5000 }).toBeGreaterThanOrEqual(1)
     await expect(page.locator('#round-number-indicator')).toContainText('Ronda #1')
 
     await expect.poll(async () => {

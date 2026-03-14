@@ -374,6 +374,54 @@ describeMultiClient('Machine mode integration scenarios', () => {
     expect(elapsedMs).toBeLessThan(1200)
   }, 12000)
 
+  test('machine move waits until explosion playback window completes', async () => {
+    client1.socket.emit('client:game:start', { boardSize: 6, machineMode: true })
+    const started = await client1.waitForEvent('game:started')
+    const game = getGame(started.data.gameId)
+
+    client1.updateTiming({
+      animationDelayMs: 200,
+      machineResponseDelayMs: 0
+    })
+
+    await client1.waitForState((state) => {
+      return state.animationDelayMs === 200 && state.machineResponseDelayMs === 0
+    }, 3000)
+
+    client1.events = []
+    game.board.cells[1][1] = { player: 1, atoms: 9 }
+    game.currentPlayer = 1
+
+    const startTime = Date.now()
+    const machineMovePromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Timeout waiting machine move after cascade')), 12000)
+      client1.socket.once('server:game:machineMove', (payload) => {
+        clearTimeout(timeout)
+        resolve(payload)
+      })
+    })
+
+    client1.makeMove(0, 0)
+    const cascadeUpdate = await client1.waitForEvent('game:stateUpdate', 3000)
+    const sequence = cascadeUpdate.data.animationSequence || []
+
+    expect(sequence.length).toBeGreaterThan(0)
+
+    const expectedDelayMs = sequence.reduce((maxDelay, step) => {
+      const currentDelay = Number(step?.delay)
+      if (!Number.isFinite(currentDelay) || currentDelay < 0) {
+        return maxDelay
+      }
+
+      return Math.max(maxDelay, currentDelay)
+    }, 0) + 200
+
+    await machineMovePromise
+    const elapsedMs = Date.now() - startTime
+
+    expect(elapsedMs).toBeGreaterThanOrEqual(expectedDelayMs - 40)
+  }, 15000)
+
   test('clamps animation timing updates to 24000 ms max with 100 ms step', async () => {
     client1.socket.emit('client:game:start', { boardSize: 6, machineMode: true })
     await client1.waitForEvent('game:started')

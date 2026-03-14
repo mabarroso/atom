@@ -292,6 +292,11 @@ export function initGameUI (socket) {
   })
 
   socket.on('server:game:machineMove', ({ row, col }) => {
+    const localState = stateManager.getState()
+    if (localState && !pendingFinalAnimationState) {
+      stateManager.updateFromServer(localState, { moveOrigin: { row, col } })
+    }
+
     gameBoard.flashTransfer(row, col)
   })
 
