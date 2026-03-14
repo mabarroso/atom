@@ -56,26 +56,30 @@ function resolveExplosion (board, row, col, player) {
     return {
       affectedCells: [],
       remainingAtoms: 0,
-      sourcePlayer: null
+      sourcePlayer: null,
+      transferPlayer: player
     }
   }
 
+  const sourcePlayerBeforeExplosion = cell.player
+  const transferPlayer = Number.isInteger(sourcePlayerBeforeExplosion) ? sourcePlayerBeforeExplosion : player
   const affectedCells = board.getAdjacentCells(row, col)
   const remainingAtoms = Math.max(0, cell.atoms - affectedCells.length)
 
   cell.atoms = remainingAtoms
-  cell.player = remainingAtoms > 0 ? player : null
+  cell.player = remainingAtoms > 0 ? transferPlayer : null
 
   affectedCells.forEach((position) => {
     const adjacentCell = board.getCell(position.row, position.col)
     adjacentCell.atoms += 1
-    adjacentCell.player = player
+    adjacentCell.player = transferPlayer
   })
 
   return {
     affectedCells,
     remainingAtoms,
-    sourcePlayer: cell.player
+    sourcePlayer: cell.player,
+    transferPlayer
   }
 }
 
@@ -136,7 +140,7 @@ function resolveCascade (board, player, maxExplosions = MAX_CASCADE_EXPLOSIONS, 
     processed.push({
       row: current.row,
       col: current.col,
-      player,
+      player: explosionResult.transferPlayer,
       atoms: sourceAtomsBeforeExplosion,
       timestamp: Date.now(),
       sourceCell: {

@@ -116,6 +116,22 @@ export function initGameUI (socket) {
     socket.emit('client:game:updateTiming', nextTiming)
   }
 
+  function getAnimationStepState (step, fallbackState) {
+    const currentState = stateManager.getState() || fallbackState
+    if (!currentState) {
+      return null
+    }
+
+    if (step?.board) {
+      return {
+        ...currentState,
+        board: step.board
+      }
+    }
+
+    return currentState
+  }
+
   function updateTimingControls (state) {
     if (!animationDelayControl || !machineDelayControl) {
       return
@@ -245,7 +261,10 @@ export function initGameUI (socket) {
     let shouldApplyMoveOrigin = true
 
     animationQueue.playExplosionSequence(animationSequence, (step) => {
-      const nextState = step?.board ? { ...state, board: step.board } : state
+      const nextState = getAnimationStepState(step, state)
+      if (!nextState) {
+        return
+      }
 
       stateManager.updateFromServer(nextState, shouldApplyMoveOrigin ? { moveOrigin } : {})
       shouldApplyMoveOrigin = false
