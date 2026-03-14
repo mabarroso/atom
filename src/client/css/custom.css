@@ -1,8 +1,3 @@
-#connection-status {
-  min-width: 9rem;
-  text-align: center;
-}
-
 .game-board {
   --board-size: 6;
   display: grid;

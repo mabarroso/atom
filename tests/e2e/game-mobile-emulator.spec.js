@@ -9,7 +9,7 @@ test.use({
 
 test('Game is usable on mobile emulator (Pixel 5)', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('#connection-status')).toContainText('Conectado')
+  await expect(page.locator('#btn-new-game')).toBeVisible()
 
   await page.click('#btn-new-game')
   await expect(page.locator('#game-board')).toBeVisible()

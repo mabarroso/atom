@@ -15,8 +15,9 @@ test('Interactive elements have accessible names', async ({ page }) => {
   await page.goto('/')
 
   const accessibilityScanResults = await new AxeBuilder({ page })
-    .include('#btn-status')
-    .include('#connection-status')
+    .include('#board-size')
+    .include('#btn-new-game')
+    .include('#btn-join-game')
     .analyze()
 
   expect(accessibilityScanResults.violations).toEqual([])

@@ -7,13 +7,13 @@ async function setupTwoPlayers (browser, boardSize = 6) {
   const pageTwo = await contextTwo.newPage()
 
   await pageOne.goto('/')
-  await expect(pageOne.locator('#connection-status')).toContainText('Conectado')
+  await expect(pageOne.locator('#btn-new-game')).toBeVisible()
   await pageOne.selectOption('#board-size', String(boardSize))
   await pageOne.click('#btn-new-game')
 
   const gameId = (await pageOne.locator('#game-id-value').textContent()).trim()
   await pageTwo.goto('/')
-  await expect(pageTwo.locator('#connection-status')).toContainText('Conectado')
+  await expect(pageTwo.locator('#btn-join-game')).toBeVisible()
   await pageTwo.fill('#join-game-id', gameId)
   await pageTwo.click('#btn-join-game')
 

@@ -2,7 +2,6 @@ const { test, expect } = require('@playwright/test')
 
 test('Retained overflow is rendered immediately after each explosion step', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('#connection-status')).toContainText('Conectado')
 
   await page.evaluate(() => {
     const triggerClientEvent = (eventName, payload) => {
